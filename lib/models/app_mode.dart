@@ -1,0 +1,11 @@
+/// Các trạng thái chính trong quy trình Kiosk của MiCharity
+enum AppMode {
+  /// Màn hình chờ quét mã QR với Camera preview trực tiếp
+  standby,
+
+  /// Màn hình hiển thị WebView trang web thành viên
+  working,
+
+  /// Màn hình Cảm ơn hiển thị trong 3 giây sau khi đóng WebView
+  finish,
+}
