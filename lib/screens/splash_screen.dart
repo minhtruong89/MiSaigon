@@ -527,7 +527,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
                 // Subtitle
                 const Text(
-                  'Chương trình Mì Sài Gòn 0đ',
+                  'Dự án thuộc Quỹ Từ thiện Bông Sen',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Color(0xFF475569),

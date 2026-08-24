@@ -1,7 +1,7 @@
 {
   "app_config": {
-    "config_version": "1.0.1",
-    "update_url": "http://data.soncamedia.com/firmware/smartbox/miTuThien/MiTuThien_1.0.1.apk"
+    "config_version": "1.0.0",
+    "update_url": "http://data.soncamedia.com/firmware/smartbox/miTuThien/MiTuThien_1.0.0.apk"
   },
   "locations": [
     {
