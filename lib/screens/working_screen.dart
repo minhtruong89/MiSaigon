@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'dart:convert';
 import 'dart:developer' as developer;
 import 'package:flutter/material.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -25,10 +27,19 @@ class _WorkingScreenState extends State<WorkingScreen> {
   bool _hasError = false;
   String _errorMessage = '';
 
+  Timer? _autoCloseTimer;
+  bool _isSuccessDetected = false;
+
   @override
   void initState() {
     super.initState();
     _initWebViewController();
+  }
+
+  @override
+  void dispose() {
+    _autoCloseTimer?.cancel();
+    super.dispose();
   }
 
   void _initWebViewController() {
@@ -43,6 +54,14 @@ class _WorkingScreenState extends State<WorkingScreen> {
 
     _webViewController = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..addJavaScriptChannel(
+        'FlutterKiosk',
+        onMessageReceived: (JavaScriptMessage message) {
+          if (message.message == 'checkin_success') {
+            _onCheckinSuccessDetected();
+          }
+        },
+      )
       ..setNavigationDelegate(
         NavigationDelegate(
           onProgress: (int progress) {
@@ -58,6 +77,7 @@ class _WorkingScreenState extends State<WorkingScreen> {
                 _hasError = false;
               });
             }
+            _autoFillPassword();
           },
           onPageFinished: (String url) {
             if (mounted) {
@@ -65,9 +85,12 @@ class _WorkingScreenState extends State<WorkingScreen> {
                 _loadingProgress = 100;
               });
             }
+            // Tự động điền mật khẩu định danh quán vào ô input quanPassword
+            _autoFillPassword();
           },
           onWebResourceError: (WebResourceError error) {
-            developer.log('Lỗi WebView: ${error.description}', name: 'WorkingScreen');
+            developer.log('Lỗi WebView: ${error.description}',
+                name: 'WorkingScreen');
             if (mounted) {
               setState(() {
                 _hasError = true;
@@ -89,16 +112,125 @@ class _WorkingScreenState extends State<WorkingScreen> {
       ..loadRequest(uri);
   }
 
+  /// Khi phát hiện trang web đã hiển thị thông báo "Đã Ghi Nhận!"
+  void _onCheckinSuccessDetected() {
+    if (_isSuccessDetected) return;
+    _isSuccessDetected = true;
+
+    debugPrint('========================================');
+    debugPrint('[WorkingScreen] Phát hiện "Đã Ghi Nhận!" thành công!');
+    debugPrint('[WorkingScreen] Tự động đóng WebView sau 3 giây...');
+    debugPrint('========================================');
+
+    _autoCloseTimer?.cancel();
+    _autoCloseTimer = Timer(const Duration(seconds: 3), () {
+      if (mounted) {
+        widget.controller.closeWebView();
+      }
+    });
+  }
+
+  Future<void> _autoFillPassword() async {
+    try {
+      final password =
+          await widget.controller.quanService.getStoredPassword();
+      if (password == null || password.trim().isEmpty) return;
+
+      final safePasswordJson = jsonEncode(password.trim());
+
+      final jsCode = '''
+(function() {
+  var targetPassword = $safePasswordJson;
+
+  // 1. Cập nhật ngay vào localStorage của webview (key mà quet.js sử dụng)
+  try {
+    localStorage.setItem('quet_last_password', targetPassword);
+  } catch (e) {}
+
+  // 2. Hàm điền mật khẩu vào ô input và phát event
+  function applyPassword() {
+    try {
+      localStorage.setItem('quet_last_password', targetPassword);
+    } catch (e) {}
+
+    var input = document.getElementById('quanPassword') ||
+                document.querySelector('input#quanPassword') ||
+                document.querySelector('input[type="password"]#quanPassword') ||
+                document.querySelector('input[name="quanPassword"]');
+    if (input && (!input.value || input.value !== targetPassword)) {
+      input.value = targetPassword;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    }
+  }
+
+  // 3. Hàm phát hiện khi hiển thị kết quả thành công (#resultSuccessView)
+  var successNotified = false;
+  function checkSuccess() {
+    if (successNotified) return;
+    var successView = document.getElementById('resultSuccessView');
+    if (successView) {
+      var style = window.getComputedStyle(successView);
+      if (style.display !== 'none' && style.visibility !== 'hidden' && successView.offsetHeight > 0) {
+        successNotified = true;
+        if (window.FlutterKiosk) {
+          window.FlutterKiosk.postMessage('checkin_success');
+        }
+      }
+    }
+  }
+
+  applyPassword();
+  checkSuccess();
+
+  // 4. Giám sát liên tục khi API fetch member xong và khi submit thành công
+  var checkCount = 0;
+  var interval = setInterval(function() {
+    checkCount++;
+    applyPassword();
+    checkSuccess();
+    if (checkCount > 120) {
+      clearInterval(interval);
+    }
+  }, 250);
+
+  // 5. Lắng nghe thay đổi trên DOM
+  try {
+    var observer = new MutationObserver(function() {
+      applyPassword();
+      checkSuccess();
+    });
+    observer.observe(document.body, { attributes: true, subtree: true, childList: true });
+  } catch (e) {}
+})();
+''';
+
+      await _webViewController.runJavaScript(jsCode);
+      developer.log(
+          'Đã đồng bộ mật khẩu quán ($password) và kích hoạt giám sát kết quả thành công',
+          name: 'WorkingScreen');
+    } catch (e) {
+      developer.log('Lỗi điền mật khẩu quán: $e', name: 'WorkingScreen');
+    }
+  }
+
   Future<void> _handlePopScope() async {
     try {
       if (await _webViewController.canGoBack()) {
         await _webViewController.goBack();
       } else {
-        widget.controller.closeWebView();
+        _handleManualClose();
       }
     } catch (e) {
-      widget.controller.closeWebView();
+      _handleManualClose();
     }
+  }
+
+  /// Xử lý khi người dùng chủ động bấm icon X (hoặc Back) để thoát
+  void _handleManualClose() {
+    // Nếu đã xác nhận nộp thành công -> chuyển màn hình "Cảm ơn bạn"
+    // Nếu chưa xác nhận nộp -> chuyển màn hình "Xác nhận thoát"
+    widget.controller.closeWebView(isSuccess: _isSuccessDetected);
   }
 
   @override
@@ -144,7 +276,7 @@ class _WorkingScreenState extends State<WorkingScreen> {
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: () {
-                      widget.controller.closeWebView();
+                      _handleManualClose();
                     },
                     borderRadius: BorderRadius.circular(22),
                     child: Container(

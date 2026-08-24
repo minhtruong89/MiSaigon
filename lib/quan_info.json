@@ -1,0 +1,80 @@
+{
+  "app_config": {
+    "config_version": "1.0.1",
+    "update_url": "http://data.soncamedia.com/firmware/smartbox/miTuThien/MiTuThien_1.0.1.apk"
+  },
+  "locations": [
+    {
+      "ma_quan": "SG34DY",
+      "ten_quan": "34D Yersin, P. Nguyễn Thái Bình TPHCM",
+      "url": "https://dtri2206.github.io/freemeals-website/?location=SG34DY",
+      "password": "ys"
+    },
+    {
+      "ma_quan": "SG24VH",
+      "ten_quan": "24 Vĩnh Hội, P. Vĩnh Hội, TP.HCM",
+      "url": "https://dtri2206.github.io/freemeals-website/?location=SG24VH",
+      "password": "vh"
+    },
+    {
+      "ma_quan": "NT73DT",
+      "ten_quan": "73 Đặng Tất, Nha Trang",
+      "url": "https://dtri2206.github.io/freemeals-website/?location=NT73DT",
+      "password": "dt"
+    },
+    {
+      "ma_quan": "NT52HTT",
+      "ten_quan": "52 Hai Tháng Tư, Nha Trang",
+      "url": "https://dtri2206.github.io/freemeals-website/?location=NT52HTT",
+      "password": "htt"
+    },
+    {
+      "ma_quan": "GL91DTH",
+      "ten_quan": "91 Đinh Tiên Hoàng, Gia Lai",
+      "url": "https://dtri2206.github.io/freemeals-website/?location=GL91DTH",
+      "password": "dth"
+    },
+    {
+      "ma_quan": "GL85PDG",
+      "ten_quan": "85 Phan Đình Giót, Gia Lai",
+      "url": "https://dtri2206.github.io/freemeals-website/?location=GL85PDG",
+      "password": "pdg"
+    },
+    {
+      "ma_quan": "GL00NVX",
+      "ten_quan": "Bờ kè Nguyễn Viết Xuân, Gia Lai",
+      "url": "https://dtri2206.github.io/freemeals-website/?location=GL00NVX",
+      "password": "nvx"
+    },
+    {
+      "ma_quan": "TVTNNC4",
+      "ten_quan": "Tác viên Tuyền Nguyễn - NC4",
+      "url": "https://dtri2206.github.io/freemeals-website/?location=TVTNNC4",
+      "password": "tnnc4"
+    },
+    {
+      "ma_quan": "TVHDNT",
+      "ten_quan": "Tác viên Hương Đặng - QYV Nha Trang",
+      "url": "https://dtri2206.github.io/freemeals-website/?location=TVHDNT",
+      "password": "hdnt"
+    },
+    {
+      "ma_quan": "TVBTNT",
+      "ten_quan": "Tác viên Bảo Trâm - QYV Nha Trang",
+      "url": "https://dtri2206.github.io/freemeals-website/?location=TVBTNT",
+      "password": "btnt"
+    },
+    {
+      "ma_quan": "TVNHGL",
+      "ten_quan": "Tác viên Ngọc Hân - Gia Lai",
+      "url": "https://dtri2206.github.io/freemeals-website/?location=TVNHGL",
+      "password": "nhgl"
+    },
+    {
+      "ma_quan": "TVMNGL",
+      "ten_quan": "Tác viên Minh Ngọc - Gia Lai",
+      "url": "https://dtri2206.github.io/freemeals-website/?location=TVMNGL",
+      "password": "mngl"
+    }
+  ]
+}

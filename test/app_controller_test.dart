@@ -34,13 +34,18 @@ void main() {
       controller.dispose();
     });
 
-    test('Trạng thái khởi tạo mặc định là STANDBY', () {
+    test('Trạng thái khởi tạo mặc định là SPLASH, setReady chuyển sang STANDBY', () {
+      expect(controller.mode, equals(AppMode.splash));
+      controller.setReady(maQuan: 'SG34DY', tenQuan: '34D Yersin');
       expect(controller.mode, equals(AppMode.standby));
+      expect(controller.currentMaQuan, equals('SG34DY'));
+      expect(controller.currentTenQuan, equals('34D Yersin'));
       expect(controller.isProcessingQr, isFalse);
       expect(controller.currentUrl, isNull);
     });
 
     test('QR không hợp lệ không đổi trạng thái và không phát beep', () async {
+      controller.setReady();
       final result = await controller.onQrDetected('https://google.com');
       expect(result, isFalse);
       expect(controller.mode, equals(AppMode.standby));
@@ -49,6 +54,7 @@ void main() {
     });
 
     test('QR hợp lệ chuyển STANDBY -> WORKING và phát đúng 1 beep', () async {
+      controller.setReady();
       const validUrl = 'https://dtri2206.github.io/member/001';
       final result = await controller.onQrDetected(validUrl);
 
@@ -60,6 +66,7 @@ void main() {
     });
 
     test('Chống duplicate: Nhiều event QR liên tiếp chỉ xử lý duy nhất 1 lần', () async {
+      controller.setReady();
       const validUrl = 'https://dtri2206.github.io/member/001';
 
       // Frame 1
@@ -82,6 +89,7 @@ void main() {
     });
 
     test('Đóng WebView chuyển WORKING -> FINISH', () async {
+      controller.setReady();
       await controller.onQrDetected('https://dtri2206.github.io/test');
       expect(controller.mode, equals(AppMode.working));
 
@@ -90,6 +98,7 @@ void main() {
     });
 
     test('resetToStandby dọn dẹp state và mở lại cho lượt quét tiếp theo', () async {
+      controller.setReady();
       await controller.onQrDetected('https://dtri2206.github.io/test');
       controller.closeWebView();
       expect(controller.mode, equals(AppMode.finish));

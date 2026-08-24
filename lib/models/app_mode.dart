@@ -1,5 +1,8 @@
 /// Các trạng thái chính trong quy trình Kiosk của MiCharity
 enum AppMode {
+  /// Màn hình Splash kiểm tra cấu hình quán và cập nhật
+  splash,
+
   /// Màn hình chờ quét mã QR với Camera preview trực tiếp
   standby,
 

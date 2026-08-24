@@ -2,10 +2,11 @@ import 'package:flutter/material.dart';
 import 'controllers/app_controller.dart';
 import 'models/app_mode.dart';
 import 'screens/finish_screen.dart';
+import 'screens/splash_screen.dart';
 import 'screens/standby_screen.dart';
 import 'screens/working_screen.dart';
 
-/// Root Application Widget của MiCharity
+/// Root Application Widget của MiCharity (Mì Sài Gòn)
 class MiCharityApp extends StatelessWidget {
   final AppController controller;
 
@@ -17,7 +18,7 @@ class MiCharityApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'MiCharity',
+      title: 'Mì Sài Gòn',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
@@ -34,6 +35,9 @@ class MiCharityApp extends StatelessWidget {
         listenable: controller,
         builder: (context, child) {
           switch (controller.mode) {
+            case AppMode.splash:
+              return SplashScreen(controller: controller);
+
             case AppMode.standby:
               return StandbyScreen(controller: controller);
 

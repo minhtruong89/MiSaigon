@@ -12,6 +12,19 @@ class FinishScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isSuccess = controller.isFinishSuccess;
+
+    final title = isSuccess ? 'Cảm ơn bạn' : 'Xác nhận thoát';
+    final subtitle = isSuccess
+        ? 'Mì Sài Gòn 0đ hân hạnh phục vụ!'
+        : 'Đã hủy phiên làm việc';
+
+    final gradientColors = isSuccess
+        ? const [Color(0xFF10B981), Color(0xFF0D5CB6)]
+        : const [Color(0xFF0D5CB6), Color(0xFF1E88E5)];
+
+    final iconData = isSuccess ? Icons.check_rounded : Icons.logout_rounded;
+
     return Scaffold(
       backgroundColor: const Color(0xFFEBF3FC),
       body: SafeArea(
@@ -35,44 +48,43 @@ class FinishScreen extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // Biểu tượng hoàn thành
+                  // Biểu tượng trạng thái
                   Container(
                     width: 100,
                     height: 100,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       gradient: LinearGradient(
-                        colors: [
-                          Color(0xFF10B981),
-                          Color(0xFF0D5CB6),
-                        ],
+                        colors: gradientColors,
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: Color(0x3310B981),
+                          color: isSuccess
+                              ? const Color(0x3310B981)
+                              : const Color(0x330D5CB6),
                           blurRadius: 18,
-                          offset: Offset(0, 6),
+                          offset: const Offset(0, 6),
                         ),
                       ],
                     ),
-                    child: const Center(
+                    child: Center(
                       child: Icon(
-                        Icons.check_rounded,
+                        iconData,
                         color: Colors.white,
-                        size: 60,
+                        size: 56,
                       ),
                     ),
                   ),
 
                   const SizedBox(height: 28),
 
-                  // Lời cảm ơn lớn
-                  const Text(
-                    'Cảm ơn bạn',
+                  // Tiêu đề
+                  Text(
+                    title,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Color(0xFF0D5CB6),
                       fontSize: 32,
                       fontWeight: FontWeight.w800,
@@ -82,10 +94,11 @@ class FinishScreen extends StatelessWidget {
 
                   const SizedBox(height: 12),
 
-                  const Text(
-                    'Mì Sài Gòn 0đ hân hạnh phục vụ!',
+                  // Phụ đề
+                  Text(
+                    subtitle,
                     textAlign: TextAlign.center,
-                    style: TextStyle(
+                    style: const TextStyle(
                       color: Color(0xFF475569),
                       fontSize: 16,
                       fontWeight: FontWeight.w500,

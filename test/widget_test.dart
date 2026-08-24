@@ -16,6 +16,7 @@ void main() {
   testWidgets('MiCharityApp loads StandbyScreen smoke test',
       (WidgetTester tester) async {
     final controller = AppController(soundService: MockSoundService());
+    controller.setReady(maQuan: 'SG34DY', tenQuan: '34D Yersin');
     await tester.pumpWidget(MiCharityApp(controller: controller));
 
     expect(find.text('Mì Sài Gòn 0đ'), findsOneWidget);
