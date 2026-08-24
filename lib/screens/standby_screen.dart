@@ -17,33 +17,33 @@ class StandbyScreen extends StatelessWidget {
     final isScanning = controller.mode == AppMode.standby && !controller.isProcessingQr;
 
     return Scaffold(
-      backgroundColor: const Color(0xFF1E1E2C),
+      backgroundColor: const Color(0xFFEBF3FC),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
 
-              // Tiêu đề chương trình từ thiện
+              // Header: Chương trình từ thiện Mì Sài Gòn 0đ (Xanh lam phong cách Web)
               Container(
-                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 16),
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
+                  gradient: const LinearGradient(
                     colors: [
-                      Colors.amber.shade700,
-                      Colors.orange.shade800,
+                      Color(0xFF0D5CB6),
+                      Color(0xFF1565C0),
                     ],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(18),
-                  boxShadow: [
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: const [
                     BoxShadow(
-                      color: Colors.orange.withValues(alpha: 0.3),
+                      color: Color(0x330D5CB6),
                       blurRadius: 12,
-                      offset: const Offset(0, 4),
+                      offset: Offset(0, 4),
                     ),
                   ],
                 ),
@@ -53,20 +53,20 @@ class StandbyScreen extends StatelessWidget {
                       'Chương trình từ thiện'.toUpperCase(),
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
+                        color: Color(0xFFE3F2FD),
+                        fontSize: 15,
                         fontWeight: FontWeight.w600,
                         letterSpacing: 1.2,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     const Text(
                       'Mì Sài Gòn 0đ',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 28,
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.w800,
                         letterSpacing: 0.5,
                       ),
                     ),
@@ -74,24 +74,32 @@ class StandbyScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
-              // Hướng dẫn người dùng
+              // Hướng dẫn người dùng (Khung trắng nổi bật)
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.08),
+                  color: Colors.white,
                   borderRadius: BorderRadius.circular(14),
                   border: Border.all(
-                    color: Colors.white.withValues(alpha: 0.15),
+                    color: const Color(0xFFD6E4F0),
+                    width: 1.2,
                   ),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x0A0D5CB6),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.credit_card,
-                      color: Colors.amberAccent,
+                      Icons.credit_card_rounded,
+                      color: Color(0xFF0D5CB6),
                       size: 26,
                     ),
                     SizedBox(width: 12),
@@ -100,9 +108,9 @@ class StandbyScreen extends StatelessWidget {
                         'Vui lòng đưa Thẻ thành viên\nvào trước màn hình',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
+                          color: Color(0xFF1E293B),
+                          fontSize: 17,
+                          fontWeight: FontWeight.w700,
                           height: 1.3,
                         ),
                       ),
@@ -111,23 +119,23 @@ class StandbyScreen extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
 
               // Camera Preview trực tiếp
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.black,
-                    borderRadius: BorderRadius.circular(22),
+                    borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: Colors.amber.shade600.withValues(alpha: 0.5),
+                      color: const Color(0xFF0D5CB6),
                       width: 2.5,
                     ),
-                    boxShadow: [
+                    boxShadow: const [
                       BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.5),
+                        color: Color(0x220D5CB6),
                         blurRadius: 16,
-                        offset: const Offset(0, 6),
+                        offset: Offset(0, 6),
                       ),
                     ],
                   ),
@@ -139,33 +147,6 @@ class StandbyScreen extends StatelessWidget {
                   ),
                 ),
               ),
-
-              const SizedBox(height: 14),
-
-              // Footer Kiosk Status
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Container(
-                    width: 8,
-                    height: 8,
-                    decoration: const BoxDecoration(
-                      color: Colors.greenAccent,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Text(
-                    'Kiosk sẵn sàng quét thẻ',
-                    style: TextStyle(
-                      color: Colors.white70,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 6),
             ],
           ),
         ),

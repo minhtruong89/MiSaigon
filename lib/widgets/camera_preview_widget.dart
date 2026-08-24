@@ -125,7 +125,7 @@ class _CameraPreviewWidgetState extends State<CameraPreviewWidget>
                 icon: const Icon(Icons.settings),
                 label: const Text('Cấp quyền Camera'),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.amber.shade700,
+                  backgroundColor: const Color(0xFF0D5CB6),
                   foregroundColor: Colors.white,
                   padding:
                       const EdgeInsets.symmetric(horizontal: 24, vertical: 12),

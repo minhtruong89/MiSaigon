@@ -22,7 +22,7 @@ class QrScanOverlay extends StatelessWidget {
             color: Colors.transparent,
             borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              color: Colors.amber.shade400.withValues(alpha: 0.8),
+              color: const Color(0xFF60A5FA).withValues(alpha: 0.8),
               width: 2.0,
             ),
           ),
@@ -43,13 +43,20 @@ class QrScanOverlay extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.65),
+              color: const Color(0xFF0D5CB6).withValues(alpha: 0.9),
               borderRadius: BorderRadius.circular(20),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x33000000),
+                  blurRadius: 6,
+                  offset: Offset(0, 2),
+                ),
+              ],
             ),
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.qr_code_scanner, color: Colors.amber, size: 18),
+                Icon(Icons.qr_code_scanner, color: Colors.white, size: 18),
                 SizedBox(width: 8),
                 Text(
                   'Đưa thẻ vào đây',
@@ -71,7 +78,7 @@ class QrScanOverlay extends StatelessWidget {
   Widget _buildCorner(Alignment alignment, bool isTop, bool isLeft) {
     const cornerLength = 24.0;
     const cornerWidth = 4.0;
-    const cornerColor = Colors.amberAccent;
+    const cornerColor = Color(0xFF38BDF8); // Light cyan/blue for high visibility on camera
 
     return Align(
       alignment: alignment,

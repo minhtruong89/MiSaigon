@@ -110,7 +110,7 @@ class _WorkingScreenState extends State<WorkingScreen> {
         await _handlePopScope();
       },
       child: Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: const Color(0xFFEBF3FC),
         body: SafeArea(
           child: Stack(
             children: [
@@ -128,17 +128,17 @@ class _WorkingScreenState extends State<WorkingScreen> {
                   right: 0,
                   child: LinearProgressIndicator(
                     value: _loadingProgress / 100.0,
-                    backgroundColor: Colors.transparent,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      Colors.amber.shade700,
+                    backgroundColor: const Color(0xFFD0E2F7),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Color(0xFF0D5CB6),
                     ),
                     minHeight: 3.5,
                   ),
                 ),
 
-              // Nút đóng (✕) ở góc trên bên phải
+              // Nút đóng (✕) ở góc trên bên phải đồng bộ style Web
               Positioned(
-                top: 12,
+                top: 10,
                 right: 12,
                 child: Material(
                   color: Colors.transparent,
@@ -146,30 +146,30 @@ class _WorkingScreenState extends State<WorkingScreen> {
                     onTap: () {
                       widget.controller.closeWebView();
                     },
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(22),
                     child: Container(
-                      width: 44,
-                      height: 44,
+                      width: 40,
+                      height: 40,
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.65),
+                        color: const Color(0xCC061F38),
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.3),
-                          width: 1.5,
+                          color: Colors.white.withValues(alpha: 0.25),
+                          width: 1.2,
                         ),
-                        boxShadow: [
+                        boxShadow: const [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.25),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
+                            color: Color(0x33000000),
+                            blurRadius: 6,
+                            offset: Offset(0, 2),
                           ),
                         ],
                       ),
                       child: const Center(
                         child: Icon(
-                          Icons.close,
+                          Icons.close_rounded,
                           color: Colors.white,
-                          size: 24,
+                          size: 22,
                         ),
                       ),
                     ),
@@ -187,69 +187,84 @@ class _WorkingScreenState extends State<WorkingScreen> {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(28.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(
-              Icons.cloud_off_rounded,
-              color: Colors.redAccent,
-              size: 64,
-            ),
-            const SizedBox(height: 18),
-            Text(
-              _errorMessage.isNotEmpty
-                  ? _errorMessage
-                  : 'Không thể tải trang. Vui lòng thử lại.',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w600,
-                color: Colors.black87,
+        child: Container(
+          padding: const EdgeInsets.all(24),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x0F0D5CB6),
+                blurRadius: 16,
+                offset: Offset(0, 4),
               ),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                ElevatedButton.icon(
-                  onPressed: () {
-                    setState(() {
-                      _hasError = false;
-                      _loadingProgress = 0;
-                    });
-                    _webViewController.reload();
-                  },
-                  icon: const Icon(Icons.refresh),
-                  label: const Text('Thử lại'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.amber.shade700,
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.cloud_off_rounded,
+                color: Color(0xFFEF4444),
+                size: 56,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                _errorMessage.isNotEmpty
+                    ? _errorMessage
+                    : 'Không thể tải trang. Vui lòng thử lại.',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      setState(() {
+                        _hasError = false;
+                        _loadingProgress = 0;
+                      });
+                      _webViewController.reload();
+                    },
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Thử lại'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0D5CB6),
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 18, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 16),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    widget.controller.closeWebView();
-                  },
-                  icon: const Icon(Icons.arrow_back),
-                  label: const Text('Quay lại'),
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: Colors.black87,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                  const SizedBox(width: 12),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      widget.controller.closeWebView();
+                    },
+                    icon: const Icon(Icons.arrow_back),
+                    label: const Text('Quay lại'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF475569),
+                      side: const BorderSide(color: Color(0xFFCBD5E1)),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 18, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
                     ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -22,8 +22,11 @@ class MiCharityApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         fontFamily: 'Roboto',
+        scaffoldBackgroundColor: const Color(0xFFEBF3FC),
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.amber,
+          seedColor: const Color(0xFF0D5CB6),
+          primary: const Color(0xFF0D5CB6),
+          surface: Colors.white,
           brightness: Brightness.light,
         ),
       ),
