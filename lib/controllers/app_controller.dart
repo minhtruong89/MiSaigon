@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import '../models/app_mode.dart';
+import '../services/nfc_service.dart';
 import '../services/qr_service.dart';
 import '../services/quan_service.dart';
 import '../services/sound_service.dart';
@@ -10,6 +11,7 @@ import '../services/sound_service.dart';
 class AppController extends ChangeNotifier {
   final SoundService _soundService;
   final QuanService _quanService;
+  final NfcService _nfcService;
 
   AppMode _mode = AppMode.splash;
   String? _currentUrl;
@@ -20,13 +22,17 @@ class AppController extends ChangeNotifier {
   String? _currentTenQuan;
   bool _isFinishSuccess = true;
 
+  NfcSupportStatus _nfcStatus = NfcSupportStatus.notSupported;
+
   static const int finishDurationSeconds = 3;
 
   AppController({
     SoundService? soundService,
     QuanService? quanService,
+    NfcService? nfcService,
   })  : _soundService = soundService ?? SoundService(),
-        _quanService = quanService ?? QuanService();
+        _quanService = quanService ?? QuanService(),
+        _nfcService = nfcService ?? NfcService();
 
   // Getters
   AppMode get mode => _mode;
@@ -34,9 +40,92 @@ class AppController extends ChangeNotifier {
   bool get isProcessingQr => _isProcessingQr;
   SoundService get soundService => _soundService;
   QuanService get quanService => _quanService;
+  NfcService get nfcService => _nfcService;
   String? get currentMaQuan => _currentMaQuan;
   String? get currentTenQuan => _currentTenQuan;
   bool get isFinishSuccess => _isFinishSuccess;
+
+  bool _isDisposed = false;
+
+  NfcSupportStatus get nfcStatus => _nfcStatus;
+  bool get isNfcSupported => _nfcStatus != NfcSupportStatus.notSupported;
+
+  NfcCardInfo? _lastDetectedCard;
+  NfcCardInfo? get lastDetectedCard => _lastDetectedCard;
+  bool get isNfcEnabled => _nfcStatus == NfcSupportStatus.enabled;
+
+  /// Kiểm tra và cập nhật trạng thái NFC
+  Future<void> checkNfcStatus() async {
+    final status = await _nfcService.checkSupportStatus();
+    if (_isDisposed) return;
+    _nfcStatus = status;
+    debugPrint('[NFC] Trạng thái NFC thiết bị: $_nfcStatus');
+    notifyListeners();
+  }
+
+  /// Khởi động phiên quét ngầm RFID/NFC
+  Future<void> startNfcScanning() async {
+    if (_nfcService.isSessionActive) return;
+
+    final status = await _nfcService.checkSupportStatus();
+    if (_isDisposed) return;
+
+    if (_nfcStatus != status) {
+      _nfcStatus = status;
+      notifyListeners();
+    }
+
+    if (_nfcStatus == NfcSupportStatus.enabled && !_nfcService.isSessionActive) {
+      await _nfcService.startListening(
+        onCardDetected: onNfcCardDetected,
+        onError: (err) {
+          debugPrint('[NFC] Lỗi phiên quét thẻ: $err');
+        },
+      );
+    } else if (_nfcStatus != NfcSupportStatus.enabled) {
+      debugPrint('[NFC] Không thể startNfcScanning vì nfcStatus = $_nfcStatus');
+    }
+  }
+
+  /// Dừng phiên quét ngầm RFID/NFC
+  Future<void> stopNfcScanning() async {
+    await _nfcService.stopListening();
+  }
+
+  /// Khởi động lại phiên quét ngầm RFID/NFC (reset HAL và khởi động lại anten)
+  Future<void> restartNfcScanning() async {
+    await stopNfcScanning();
+    await Future.delayed(const Duration(milliseconds: 150));
+    await startNfcScanning();
+  }
+
+  /// Xử lý khi phát hiện thẻ RFID/NFC
+  Future<void> onNfcCardDetected(NfcCardInfo cardInfo) async {
+    debugPrint('========================================');
+    debugPrint('[NFC/RFID] QUÉT THÀNH CÔNG THẺ THÀNH VIÊN!');
+    debugPrint('[NFC/RFID] UID (Hex có dấu hai chấm): ${cardInfo.uidHex}');
+    debugPrint('[NFC/RFID] UID (Hex liền): ${cardInfo.uidRawHex}');
+    debugPrint('[NFC/RFID] Công nghệ thẻ (Standards): ${cardInfo.technologies.join(', ')}');
+    if (cardInfo.ndefPayload != null && cardInfo.ndefPayload!.isNotEmpty) {
+      debugPrint('[NFC/RFID] Dữ liệu NDEF: ${cardInfo.ndefPayload}');
+    }
+    debugPrint('[NFC/RFID] Raw Tag Data: ${cardInfo.rawData}');
+    debugPrint('[NFC/RFID] Thời điểm quét: ${cardInfo.timestamp.toIso8601String()}');
+    debugPrint('========================================');
+
+    developer.log(
+      'Thẻ NFC/RFID phát hiện: UID=${cardInfo.uidHex}, Tech=${cardInfo.technologies}',
+      name: 'AppController',
+    );
+
+    _lastDetectedCard = cardInfo;
+    notifyListeners();
+
+    // Phát âm thanh BÍP giống như quét mã QR
+    await _soundService.playSuccessBeep();
+
+    // Chưa cần chuyển qua working screen kêu web (giữ nguyên ở standby)
+  }
 
   /// Hoàn tất kiểm tra ở SplashScreen và chuyển sang STANDBY
   void setReady({String? maQuan, String? tenQuan}) {
@@ -46,6 +135,7 @@ class AppController extends ChangeNotifier {
     _isProcessingQr = false;
     _currentUrl = null;
     _isFinishSuccess = true;
+    checkNfcStatus();
     notifyListeners();
   }
 
@@ -122,8 +212,10 @@ class AppController extends ChangeNotifier {
 
   @override
   void dispose() {
+    _isDisposed = true;
     _cancelFinishTimer();
     _soundService.dispose();
+    _nfcService.stopListening();
     super.dispose();
   }
 }

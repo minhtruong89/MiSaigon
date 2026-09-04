@@ -50,6 +50,9 @@ class _SplashScreenState extends State<SplashScreen> {
 
     final quanService = widget.controller.quanService;
 
+    // Kiểm tra trạng thái NFC ngay từ đầu để sẵn sàng chọn tab chính xác khi vào StandbyScreen
+    await widget.controller.checkNfcStatus();
+
     // 1. Tải file quan_info.json từ server
     setState(() {
       _statusText = 'Đang đồng bộ dữ liệu quán...';

@@ -4,6 +4,9 @@ import 'package:flutter/services.dart';
 
 /// Dịch vụ phát âm thanh BÍP khi quét QR thành công
 class SoundService {
+  static const MethodChannel _nativeAudioChannel =
+      MethodChannel('com.misaigon.micharity/audio');
+
   AudioPlayer? _audioPlayer;
   bool _isInitialized = false;
 
@@ -22,8 +25,8 @@ class SoundService {
           android: const AudioContextAndroid(
             isSpeakerphoneOn: true,
             stayAwake: true,
-            contentType: AndroidContentType.sonification,
-            usageType: AndroidUsageType.assistanceSonification,
+            contentType: AndroidContentType.music,
+            usageType: AndroidUsageType.media,
             audioFocus: AndroidAudioFocus.gainTransientMayDuck,
           ),
           iOS: AudioContextIOS(
@@ -44,20 +47,30 @@ class SoundService {
 
   /// Phát đúng 1 tiếng bíp lớn khi QR hợp lệ
   Future<void> playSuccessBeep() async {
+    // 1. Phản hồi rung
+    try {
+      await HapticFeedback.mediumImpact();
+    } catch (_) {}
+
+    // 2. Gọi Native Audio (AudioTrack trực tiếp phát sóng âm ra Loa Ngoài)
+    try {
+      await _nativeAudioChannel.invokeMethod<bool>('playBeep');
+    } catch (e) {
+      developer.log('Native beep error: $e', name: 'SoundService');
+    }
+
+    // 3. Dự phòng song song SystemSound
+    try {
+      await SystemSound.play(SystemSoundType.alert);
+    } catch (_) {}
+
+    // 4. Dự phòng AudioPlayer
     try {
       await init();
-      // Dừng âm thanh cũ nếu đang phát để phát tiếng bíp mới dứt khoát
       await _player.stop();
       await _player.play(AssetSource('audio/qr_success.wav'), volume: 1.0);
     } catch (e) {
-      developer.log('Lỗi phát âm thanh WAV: $e, sử dụng SystemSound fallback',
-          name: 'SoundService');
-      try {
-        await SystemSound.play(SystemSoundType.alert);
-      } catch (fallbackError) {
-        developer.log('Lỗi fallback SystemSound: $fallbackError',
-            name: 'SoundService');
-      }
+      developer.log('AudioPlayer error: $e', name: 'SoundService');
     }
   }
 

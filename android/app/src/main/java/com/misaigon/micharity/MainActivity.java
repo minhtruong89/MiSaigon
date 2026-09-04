@@ -1,24 +1,54 @@
 package com.misaigon.micharity;
 
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.media.AudioAttributes;
+import android.media.AudioFormat;
+import android.media.AudioManager;
+import android.media.AudioTrack;
+import android.media.Ringtone;
+import android.media.RingtoneManager;
 import android.net.Uri;
+import android.nfc.NdefMessage;
+import android.nfc.NdefRecord;
+import android.nfc.NfcAdapter;
+import android.nfc.Tag;
+import android.nfc.tech.Ndef;
 import android.os.Build;
+import android.os.Bundle;
+import android.provider.Settings;
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import io.flutter.embedding.android.FlutterActivity;
 import io.flutter.embedding.engine.FlutterEngine;
 import io.flutter.plugin.common.MethodCall;
 import io.flutter.plugin.common.MethodChannel;
 
 public class MainActivity extends FlutterActivity {
-    private static final String CHANNEL = "com.misaigon.micharity/installer";
+    private static final String CHANNEL_INSTALLER = "com.misaigon.micharity/installer";
+    private static final String CHANNEL_AUDIO = "com.misaigon.micharity/audio";
+    private static final String CHANNEL_NFC = "com.misaigon.micharity/nfc";
+
+    private short[] beepSamples;
+    private MethodChannel nfcChannel;
+    private NfcAdapter nfcAdapter;
+    private boolean isNfcScanning = false;
 
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
         super.configureFlutterEngine(flutterEngine);
 
-        new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL)
+        initBeepSamples();
+
+        // Installer Channel
+        new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL_INSTALLER)
             .setMethodCallHandler(new MethodChannel.MethodCallHandler() {
                 @Override
                 public void onMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
@@ -61,5 +91,347 @@ public class MainActivity extends FlutterActivity {
                     }
                 }
             });
+
+        // Native Audio Channel (AudioTrack direct PCM output to Loudspeaker)
+        new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL_AUDIO)
+            .setMethodCallHandler(new MethodChannel.MethodCallHandler() {
+                @Override
+                public void onMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
+                    if (call.method.equals("playBeep")) {
+                        playNativeBeep();
+                        result.success(true);
+                    } else {
+                        result.notImplemented();
+                    }
+                }
+            });
+
+        // Native NFC Channel
+        nfcChannel = new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL_NFC);
+        nfcChannel.setMethodCallHandler(new MethodChannel.MethodCallHandler() {
+            @Override
+            public void onMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
+                if (call.method.equals("isNfcHardwarePresent")) {
+                    try {
+                        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(MainActivity.this);
+                        result.success(adapter != null);
+                    } catch (Exception e) {
+                        result.success(false);
+                    }
+                } else if (call.method.equals("isNfcEnabled")) {
+                    try {
+                        NfcAdapter adapter = NfcAdapter.getDefaultAdapter(MainActivity.this);
+                        result.success(adapter != null && adapter.isEnabled());
+                    } catch (Exception e) {
+                        result.success(false);
+                    }
+                } else if (call.method.equals("startScan")) {
+                    isNfcScanning = true;
+                    enableNfcScanning();
+                    result.success(true);
+                } else if (call.method.equals("stopScan")) {
+                    if (!isNfcScanning) {
+                        result.success(true);
+                        return;
+                    }
+                    isNfcScanning = false;
+                    disableNfcScanning();
+                    result.success(true);
+                } else if (call.method.equals("openNfcSettings")) {
+                    try {
+                        Intent intent = new Intent(Settings.ACTION_NFC_SETTINGS);
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                        result.success(true);
+                    } catch (Exception e) {
+                        try {
+                            Intent intent = new Intent(Settings.ACTION_WIRELESS_SETTINGS);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent);
+                            result.success(true);
+                        } catch (Exception ex) {
+                            Intent intent = new Intent(Settings.ACTION_SETTINGS);
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent);
+                            result.success(true);
+                        }
+                    }
+                } else {
+                    result.notImplemented();
+                }
+            }
+        });
+    }
+
+    private void logToFlutter(String message) {
+        android.util.Log.d("MiCharityNFC", message);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (nfcChannel != null) {
+                    try {
+                        nfcChannel.invokeMethod("onNativeLog", message);
+                    } catch (Exception ignored) {}
+                }
+            }
+        });
+    }
+
+    private void enableNfcScanning() {
+        if (nfcAdapter == null) {
+            nfcAdapter = NfcAdapter.getDefaultAdapter(this);
+        }
+        if (nfcAdapter == null) {
+            logToFlutter("enableNfcScanning: nfcAdapter is null (device has no NFC hardware)");
+            return;
+        }
+        if (!nfcAdapter.isEnabled()) {
+            logToFlutter("enableNfcScanning: NFC is DISABLED in system settings!");
+            return;
+        }
+
+        logToFlutter("Starting NFC ReaderMode on " + Build.MANUFACTURER + " " + Build.MODEL + " (Android " + Build.VERSION.RELEASE + ", SDK " + Build.VERSION.SDK_INT + ")");
+
+        // 1. Tắt foreground dispatch và ReaderMode nếu còn sót để reset HAL
+        try {
+            nfcAdapter.disableForegroundDispatch(this);
+        } catch (Exception ignored) {}
+        try {
+            nfcAdapter.disableReaderMode(this);
+        } catch (Exception ignored) {}
+
+        // 2. Kích hoạt ReaderMode với các cờ chuẩn cho tất cả các thẻ RFID/NFC
+        // BỎ FLAG_READER_NFC_BARCODE (Kovio) vì gây lỗi phần cứng trên Samsung SM-A236E
+        // GIỮ FLAG_READER_SKIP_NDEF_CHECK để nhận ngay thẻ RFID trắng / Mifare Classic
+        try {
+            int flags = NfcAdapter.FLAG_READER_NFC_A |
+                        NfcAdapter.FLAG_READER_NFC_B |
+                        NfcAdapter.FLAG_READER_NFC_F |
+                        NfcAdapter.FLAG_READER_NFC_V |
+                        NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK;
+
+            nfcAdapter.enableReaderMode(this, new NfcAdapter.ReaderCallback() {
+                @Override
+                public void onTagDiscovered(Tag tag) {
+                    logToFlutter(">>> Tag discovered via ReaderCallback! Tech: " + java.util.Arrays.toString(tag.getTechList()));
+                    onTagDiscoveredInternal(tag);
+                }
+            }, flags, null);
+
+            logToFlutter("enableReaderMode activated successfully! Anten NFC is actively listening for cards...");
+        } catch (Exception e) {
+            logToFlutter("enableReaderMode failed: " + e.getMessage() + ", falling back to ForegroundDispatch");
+            enableForegroundDispatchFallback();
+        }
+    }
+
+    private void enableForegroundDispatchFallback() {
+        try {
+            Intent intent = new Intent(this, getClass()).addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            int pendingFlags = PendingIntent.FLAG_UPDATE_CURRENT;
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                pendingFlags |= PendingIntent.FLAG_MUTABLE;
+            }
+            PendingIntent pendingIntent = PendingIntent.getActivity(this, 0, intent, pendingFlags);
+            nfcAdapter.enableForegroundDispatch(this, pendingIntent, null, null);
+            logToFlutter("Fallback enableForegroundDispatch activated");
+        } catch (Exception ex) {
+            logToFlutter("enableForegroundDispatchFallback error: " + ex.getMessage());
+        }
+    }
+
+    private void disableNfcScanning() {
+        if (nfcAdapter != null) {
+            try {
+                nfcAdapter.disableReaderMode(this);
+                logToFlutter("ReaderMode disabled");
+            } catch (Exception ignored) {}
+            try {
+                nfcAdapter.disableForegroundDispatch(this);
+            } catch (Exception ignored) {}
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        logToFlutter("MainActivity onResume (isNfcScanning=" + isNfcScanning + ")");
+        if (isNfcScanning) {
+            enableNfcScanning();
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        logToFlutter("MainActivity onPause");
+        if (isNfcScanning) {
+            disableNfcScanning();
+        }
+    }
+
+    @Override
+    protected void onNewIntent(@NonNull Intent intent) {
+        super.onNewIntent(intent);
+        setIntent(intent);
+        logToFlutter(">>> onNewIntent received! Action: " + intent.getAction());
+
+        Tag tag = null;
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG, Tag.class);
+            }
+        } catch (Throwable ignored) {}
+        if (tag == null) {
+            try {
+                tag = intent.getParcelableExtra(NfcAdapter.EXTRA_TAG);
+            } catch (Throwable ignored) {}
+        }
+
+        if (tag != null) {
+            logToFlutter("Tag extracted successfully from onNewIntent! ID length: " + (tag.getId() != null ? tag.getId().length : 0));
+            onTagDiscoveredInternal(tag);
+        } else {
+            logToFlutter("WARNING: onNewIntent received but EXTRA_TAG is null! Action: " + intent.getAction() + ", Extras: " + intent.getExtras());
+        }
+    }
+
+    private void onTagDiscoveredInternal(Tag tag) {
+        // Phát tiếng BÍP native ngay lập tức không cần chờ qua Flutter
+        playNativeBeep();
+
+        final Map<String, Object> map = parseTagToMap(tag);
+        logToFlutter("Tag detected! UID: " + map.get("uidHex") + ", Standards: " + map.get("technologies"));
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                if (nfcChannel != null) {
+                    nfcChannel.invokeMethod("onCardDetected", map);
+                }
+            }
+        });
+    }
+
+    private Map<String, Object> parseTagToMap(Tag tag) {
+        Map<String, Object> map = new HashMap<>();
+        byte[] idBytes = tag.getId();
+        if (idBytes != null && idBytes.length > 0) {
+            StringBuilder sbHex = new StringBuilder();
+            StringBuilder sbRaw = new StringBuilder();
+            for (int i = 0; i < idBytes.length; i++) {
+                String hex = String.format("%02X", idBytes[i]);
+                sbRaw.append(hex);
+                if (i > 0) sbHex.append(":");
+                sbHex.append(hex);
+            }
+            map.put("uidHex", sbHex.toString());
+            map.put("uidRawHex", sbRaw.toString());
+            map.put("idBytes", idBytes);
+        } else {
+            map.put("uidHex", "UNKNOWN");
+            map.put("uidRawHex", "UNKNOWN");
+            map.put("idBytes", new byte[0]);
+        }
+
+        String[] techList = tag.getTechList();
+        List<String> technologies = new ArrayList<>();
+        if (techList != null) {
+            for (String tech : techList) {
+                String simpleName = tech.substring(tech.lastIndexOf('.') + 1);
+                technologies.add(simpleName);
+            }
+        }
+        map.put("technologies", technologies);
+
+        // Đọc NDEF nếu có
+        try {
+            Ndef ndef = Ndef.get(tag);
+            if (ndef != null) {
+                NdefMessage cached = ndef.getCachedNdefMessage();
+                if (cached != null) {
+                    NdefRecord[] records = cached.getRecords();
+                    if (records != null && records.length > 0) {
+                        StringBuilder ndefStr = new StringBuilder();
+                        for (NdefRecord record : records) {
+                            try {
+                                String type = new String(record.getType(), "UTF-8");
+                                String payload = new String(record.getPayload(), "UTF-8");
+                                if (ndefStr.length() > 0) ndefStr.append("; ");
+                                ndefStr.append("[").append(type).append(": ").append(payload).append("]");
+                            } catch (Exception ignored) {}
+                        }
+                        map.put("ndefPayload", ndefStr.toString());
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+
+        return map;
+    }
+
+    private void initBeepSamples() {
+        try {
+            int sampleRate = 44100;
+            int numSamples = sampleRate * 250 / 1000; // 250ms
+            beepSamples = new short[numSamples];
+            double f1 = 2400.0; // 2.4 kHz (tần số vang lớn nhất của loa ngoài điện thoại)
+            double f2 = 1200.0; // 1.2 kHz
+
+            for (int i = 0; i < numSamples; ++i) {
+                double t = (double) i / sampleRate;
+                double envelope = 1.0;
+                if (i < 200) {
+                    envelope = (double) i / 200;
+                } else if (i > numSamples - 600) {
+                    envelope = (double) (numSamples - i) / 600;
+                }
+                double wave = Math.sin(2 * Math.PI * f1 * t) * 0.75 + Math.sin(2 * Math.PI * f2 * t) * 0.25;
+                beepSamples[i] = (short) (wave * 32767 * envelope);
+            }
+        } catch (Exception ignored) {
+        }
+    }
+
+    private void playNativeBeep() {
+        try {
+            if (beepSamples == null) {
+                initBeepSamples();
+            }
+
+            int sampleRate = 44100;
+            AudioAttributes audioAttributes = new AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_MEDIA)
+                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .build();
+
+            AudioFormat audioFormat = new AudioFormat.Builder()
+                .setSampleRate(sampleRate)
+                .setEncoding(AudioFormat.ENCODING_PCM_16BIT)
+                .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
+                .build();
+
+            AudioTrack track = new AudioTrack(
+                audioAttributes,
+                audioFormat,
+                beepSamples.length * 2,
+                AudioTrack.MODE_STATIC,
+                AudioManager.AUDIO_SESSION_ID_GENERATE
+            );
+
+            track.write(beepSamples, 0, beepSamples.length);
+            track.setVolume(1.0f);
+            track.play();
+        } catch (Exception e) {
+            // Fallback RingtoneManager to notification stream
+            try {
+                Uri notificationUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+                Ringtone ringtone = RingtoneManager.getRingtone(getApplicationContext(), notificationUri);
+                if (ringtone != null) {
+                    ringtone.play();
+                }
+            } catch (Exception ignored) {
+            }
+        }
     }
 }
+

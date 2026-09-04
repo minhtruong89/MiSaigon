@@ -268,40 +268,51 @@ class _WorkingScreenState extends State<WorkingScreen> {
                   ),
                 ),
 
-              // Nút đóng (✕) ở góc trên bên phải đồng bộ style Web
+              // Nút HỦY ở góc trên bên phải (gọn gàng, sát mép phải, không che nội dung)
               Positioned(
-                top: 10,
-                right: 12,
+                top: 12,
+                right: 8,
                 child: Material(
                   color: Colors.transparent,
                   child: InkWell(
                     onTap: () {
                       _handleManualClose();
                     },
-                    borderRadius: BorderRadius.circular(22),
+                    borderRadius: BorderRadius.circular(6),
                     child: Container(
-                      width: 40,
-                      height: 40,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 3.5),
                       decoration: BoxDecoration(
-                        color: const Color(0xCC061F38),
-                        shape: BoxShape.circle,
+                        gradient: const LinearGradient(
+                          colors: [
+                            Color(0xFFEF4444),
+                            Color(0xFFDC2626),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                        borderRadius: BorderRadius.circular(6),
                         border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.25),
+                          color: Colors.white,
                           width: 1.2,
                         ),
                         boxShadow: const [
                           BoxShadow(
                             color: Color(0x33000000),
-                            blurRadius: 6,
+                            blurRadius: 4,
                             offset: Offset(0, 2),
                           ),
                         ],
                       ),
                       child: const Center(
-                        child: Icon(
-                          Icons.close_rounded,
-                          color: Colors.white,
-                          size: 22,
+                        child: Text(
+                          'HỦY',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.1,
+                          ),
                         ),
                       ),
                     ),

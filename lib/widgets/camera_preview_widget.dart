@@ -34,6 +34,7 @@ class _CameraPreviewWidgetState extends State<CameraPreviewWidget>
 
   void _initScanner() {
     _scannerController = MobileScannerController(
+      autoStart: widget.isScanningActive,
       facing: CameraFacing.front, // Ưu tiên Camera trước
       detectionSpeed: DetectionSpeed.noDuplicates,
       returnImage: false,
@@ -88,6 +89,9 @@ class _CameraPreviewWidgetState extends State<CameraPreviewWidget>
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
+    try {
+      _scannerController.stop();
+    } catch (_) {}
     _scannerController.dispose();
     super.dispose();
   }
@@ -145,41 +149,44 @@ class _CameraPreviewWidgetState extends State<CameraPreviewWidget>
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // Live Camera Preview
-          MobileScanner(
-            controller: _scannerController,
-            onDetect: (capture) {
-              if (!widget.isScanningActive) return;
-              final barcodes = capture.barcodes;
-              for (final barcode in barcodes) {
-                final rawValue = barcode.rawValue;
-                if (rawValue != null && rawValue.isNotEmpty) {
-                  widget.onBarcodeDetected(rawValue);
-                  break;
+          // Live Camera Preview (lật ngược chiều ngang để hiển thị dạng gương soi như camera trước thông thường)
+          Transform.flip(
+            flipX: true,
+            child: MobileScanner(
+              controller: _scannerController,
+              onDetect: (capture) {
+                if (!widget.isScanningActive) return;
+                final barcodes = capture.barcodes;
+                for (final barcode in barcodes) {
+                  final rawValue = barcode.rawValue;
+                  if (rawValue != null && rawValue.isNotEmpty) {
+                    widget.onBarcodeDetected(rawValue);
+                    break;
+                  }
                 }
-              }
-            },
-            errorBuilder: (context, error) {
-              WidgetsBinding.instance.addPostFrameCallback((_) {
-                if (mounted) {
-                  setState(() {
-                    if (error.errorCode ==
-                        MobileScannerErrorCode.permissionDenied) {
-                      _hasPermission = false;
-                      _errorMessage =
-                          'Ứng dụng cần quyền Camera để quét Thẻ thành viên.';
-                    } else {
-                      _hasError = true;
-                      _errorMessage =
-                          'Không thể khởi động camera.\nVui lòng kiểm tra lại thiết bị.';
-                    }
-                  });
-                }
-              });
-              return const Center(
-                child: CircularProgressIndicator(color: Colors.amber),
-              );
-            },
+              },
+              errorBuilder: (context, error) {
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  if (mounted) {
+                    setState(() {
+                      if (error.errorCode ==
+                          MobileScannerErrorCode.permissionDenied) {
+                        _hasPermission = false;
+                        _errorMessage =
+                            'Ứng dụng cần quyền Camera để quét Thẻ thành viên.';
+                      } else {
+                        _hasError = true;
+                        _errorMessage =
+                            'Không thể khởi động camera.\nVui lòng kiểm tra lại thiết bị.';
+                      }
+                    });
+                  }
+                });
+                return const Center(
+                  child: CircularProgressIndicator(color: Colors.amber),
+                );
+              },
+            ),
           ),
 
           // Khung ngắm quét QR

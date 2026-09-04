@@ -20,7 +20,7 @@ void main() {
     await tester.pumpWidget(MiCharityApp(controller: controller));
 
     expect(find.text('Mì Sài Gòn 0đ'), findsOneWidget);
-    expect(find.textContaining('Vui lòng đưa Thẻ thành viên'), findsOneWidget);
+    expect(find.textContaining('Đưa mã QR trước màn hình'), findsOneWidget);
   });
 }
 
