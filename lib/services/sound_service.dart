@@ -45,14 +45,15 @@ class SoundService {
     }
   }
 
-  /// Phát đúng 1 tiếng bíp lớn khi QR hợp lệ
+  /// Phát đúng 1 tiếng bíp lớn và rung haptic khi QR hoặc Thẻ NFC hợp lệ
   Future<void> playSuccessBeep() async {
-    // 1. Phản hồi rung
+    // 1. Phản hồi rung haptic qua Flutter
     try {
-      await HapticFeedback.mediumImpact();
+      await HapticFeedback.vibrate();
+      await HapticFeedback.heavyImpact();
     } catch (_) {}
 
-    // 2. Gọi Native Audio (AudioTrack trực tiếp phát sóng âm ra Loa Ngoài)
+    // 2. Gọi Native Audio (Kích hoạt Vibrator phần cứng + ToneGenerator + AudioTrack)
     try {
       await _nativeAudioChannel.invokeMethod<bool>('playBeep');
     } catch (e) {
@@ -72,6 +73,16 @@ class SoundService {
     } catch (e) {
       developer.log('AudioPlayer error: $e', name: 'SoundService');
     }
+  }
+
+  /// Rung haptic phần cứng (dùng khi thẻ chưa đăng ký hoặc nhận thẻ)
+  Future<void> vibrateOnly() async {
+    try {
+      await HapticFeedback.vibrate();
+    } catch (_) {}
+    try {
+      await _nativeAudioChannel.invokeMethod<bool>('vibrate');
+    } catch (_) {}
   }
 
   /// Giải phóng tài nguyên

@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../controllers/app_controller.dart';
 import '../models/app_mode.dart';
 import '../services/nfc_service.dart';
@@ -24,11 +26,15 @@ class _StandbyScreenState extends State<StandbyScreen>
   // Mặc định luôn là 1 (Quẹt thẻ NFC) để KHÔNG bao giờ khởi tạo Camera ngầm ở frame đầu tiên
   int _selectedScanTab = 1;
 
+  final TextEditingController _nfcTextController = TextEditingController();
+  Timer? _nfcDebounceTimer;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     widget.controller.addListener(_onControllerChanged);
+    HardwareKeyboard.instance.addHandler(_handleGlobalHardwareKey);
 
     // Nếu thiết bị chắc chắn không hỗ trợ NFC thì mới chuyển về Quét QR (0)
     if (widget.controller.nfcStatus == NfcSupportStatus.notSupported) {
@@ -37,6 +43,9 @@ class _StandbyScreenState extends State<StandbyScreen>
       _selectedScanTab = 1;
     }
 
+    // Xóa trạng thái thẻ chưa đăng ký để tab quẹt thẻ luôn sạch sẽ ban đầu
+    widget.controller.clearUnregisteredCard();
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initNfcAndScan();
     });
@@ -44,8 +53,112 @@ class _StandbyScreenState extends State<StandbyScreen>
 
   void _onControllerChanged() {
     if (mounted) {
+      final currentCode = widget.controller.currentScannedNfcCode;
+      if (currentCode != null && currentCode != _nfcTextController.text) {
+        _nfcTextController.text = currentCode;
+      } else if (widget.controller.unregisteredCard == null && currentCode == null) {
+        if (_nfcTextController.text.isNotEmpty) {
+          _nfcTextController.clear();
+        }
+      }
       setState(() {});
       _syncNfcScanning();
+    }
+  }
+
+  String? _extractCharFromKeyEvent(KeyEvent event) {
+    final char = event.character;
+    if (char != null && char.isNotEmpty && char.codeUnitAt(0) >= 32) {
+      return char;
+    }
+    final keyId = event.logicalKey.keyId;
+    if (keyId >= LogicalKeyboardKey.digit0.keyId &&
+        keyId <= LogicalKeyboardKey.digit9.keyId) {
+      return String.fromCharCode(
+          48 + (keyId - LogicalKeyboardKey.digit0.keyId));
+    }
+    if (keyId >= LogicalKeyboardKey.numpad0.keyId &&
+        keyId <= LogicalKeyboardKey.numpad9.keyId) {
+      return String.fromCharCode(
+          48 + (keyId - LogicalKeyboardKey.numpad0.keyId));
+    }
+    if (keyId >= LogicalKeyboardKey.keyA.keyId &&
+        keyId <= LogicalKeyboardKey.keyZ.keyId) {
+      return String.fromCharCode(
+          97 + (keyId - LogicalKeyboardKey.keyA.keyId));
+    }
+    if (event.logicalKey == LogicalKeyboardKey.colon ||
+        event.logicalKey == LogicalKeyboardKey.semicolon) {
+      return ':';
+    }
+    return null;
+  }
+
+  bool _handleGlobalHardwareKey(KeyEvent event) {
+    // Chỉ nhận sự kiện khi đang ở tab Quẹt thẻ NFC (1) và ở chế độ STANDBY
+    if (_selectedScanTab != 1 || widget.controller.mode != AppMode.standby) {
+      return false;
+    }
+
+    if (event is KeyDownEvent) {
+      // 1. Phím Enter hoặc Numpad Enter: Kết thúc chuỗi mã từ đầu đọc USB
+      if (event.logicalKey == LogicalKeyboardKey.enter ||
+          event.logicalKey == LogicalKeyboardKey.numpadEnter ||
+          event.character == '\n' ||
+          event.character == '\r') {
+        _nfcDebounceTimer?.cancel();
+        final trimmed = _nfcTextController.text.trim();
+        if (trimmed.isNotEmpty) {
+          _checkMemberFromInput(trimmed);
+        }
+        return true;
+      }
+
+      // 2. Phím Backspace
+      if (event.logicalKey == LogicalKeyboardKey.backspace) {
+        if (_nfcTextController.text.isNotEmpty) {
+          _nfcTextController.text = _nfcTextController.text.substring(
+            0,
+            _nfcTextController.text.length - 1,
+          );
+          setState(() {});
+        }
+        return true;
+      }
+
+      // 3. Trích xuất ký tự từ đầu đọc RFID USB
+      final char = _extractCharFromKeyEvent(event);
+      if (char != null) {
+        final isTimerActive =
+            _nfcDebounceTimer != null && _nfcDebounceTimer!.isActive;
+
+        // Nếu lần quét trước đã xong hoặc trống, bắt đầu mã mới
+        if (!isTimerActive) {
+          _nfcTextController.text = char;
+        } else {
+          _nfcTextController.text += char;
+        }
+        setState(() {});
+
+        // Đợi 350ms sau khi nhận ký tự cuối để kiểm tra thành viên
+        _nfcDebounceTimer?.cancel();
+        _nfcDebounceTimer = Timer(const Duration(milliseconds: 350), () {
+          final trimmed = _nfcTextController.text.trim();
+          if (trimmed.isNotEmpty) {
+            _checkMemberFromInput(trimmed);
+          }
+        });
+        return true;
+      }
+    }
+    return false;
+  }
+
+  Future<void> _checkMemberFromInput(String code) async {
+    if (!mounted) return;
+    final success = await widget.controller.processNfcInput(code);
+    if (!success && mounted) {
+      setState(() {});
     }
   }
 
@@ -123,6 +236,9 @@ class _StandbyScreenState extends State<StandbyScreen>
 
   @override
   void dispose() {
+    HardwareKeyboard.instance.removeHandler(_handleGlobalHardwareKey);
+    _nfcDebounceTimer?.cancel();
+    _nfcTextController.dispose();
     WidgetsBinding.instance.removeObserver(this);
     widget.controller.removeListener(_onControllerChanged);
     widget.controller.stopNfcScanning();
@@ -401,7 +517,7 @@ class _StandbyScreenState extends State<StandbyScreen>
                             padding: const EdgeInsets.symmetric(vertical: 10),
                             decoration: BoxDecoration(
                               color: _selectedScanTab == 0
-                                  ? Colors.white
+                                   ? Colors.white
                                   : Colors.transparent,
                               borderRadius: BorderRadius.circular(10),
                               boxShadow: _selectedScanTab == 0
@@ -618,28 +734,103 @@ class _StandbyScreenState extends State<StandbyScreen>
                   ),
                 ),
               ),
+              const SizedBox(height: 14),
+              // Khung TextField nhận diện mã thẻ quét từ đầu đọc USB / NFC hoặc nhập tay
+              Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x0A000000),
+                      blurRadius: 8,
+                      offset: Offset(0, 2),
+                    ),
+                  ],
+                ),
+                child: TextField(
+                  controller: _nfcTextController,
+                  readOnly: true,
+                  showCursor: false,
+                  enableInteractiveSelection: false,
+                  keyboardType: TextInputType.none,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF0D5CB6),
+                    letterSpacing: 0.5,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: 'Chờ quét từ đầu đọc RFID / NFC...',
+                    hintStyle: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.normal,
+                      color: Colors.grey.shade400,
+                    ),
+                    prefixIcon: const Icon(
+                      Icons.credit_card_rounded,
+                      color: Color(0xFF0D5CB6),
+                      size: 22,
+                    ),
+                    suffixIcon: _nfcTextController.text.isNotEmpty
+                        ? IconButton(
+                            icon: const Icon(Icons.clear_rounded, size: 20),
+                            color: Colors.grey.shade500,
+                            onPressed: () {
+                              _nfcDebounceTimer?.cancel();
+                              _nfcTextController.clear();
+                              widget.controller.clearUnregisteredCard();
+                              setState(() {});
+                            },
+                          )
+                        : null,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFFF8FAFC),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: const BorderSide(
+                        color: Color(0xFF0D5CB6),
+                        width: 2,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
               if (lastCard != null) ...[
                 const SizedBox(height: 16),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFECFDF5),
+                    color: const Color(0xFFFFFBEB),
                     borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFF10B981)),
+                    border: Border.all(color: const Color(0xFFF59E0B)),
                   ),
                   child: Column(
                     children: [
                       const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.check_circle_rounded,
-                              color: Color(0xFF10B981), size: 20),
+                          Icon(Icons.info_outline_rounded,
+                              color: Color(0xFFD97706), size: 20),
                           SizedBox(width: 8),
                           Text(
-                            'QUÉT THẺ THÀNH CÔNG!',
+                            'THẺ CHƯA ĐĂNG KÝ THÀNH VIÊN',
                             style: TextStyle(
-                              color: Color(0xFF065F46),
+                              color: Color(0xFFB45309),
                               fontWeight: FontWeight.w800,
                               fontSize: 14,
                             ),
@@ -648,23 +839,17 @@ class _StandbyScreenState extends State<StandbyScreen>
                       ),
                       const SizedBox(height: 6),
                       Text(
-                        'UID: ${lastCard.uidHex}',
+                        lastCard.uidDec != null
+                            ? 'UID Hex: ${lastCard.uidHex}\nUID Dec: ${lastCard.uidDec} (${lastCard.uidDecPadded})'
+                            : 'UID: ${lastCard.uidHex}',
+                        textAlign: TextAlign.center,
                         style: const TextStyle(
-                          color: Color(0xFF047857),
+                          color: Color(0xFF92400E),
                           fontWeight: FontWeight.bold,
-                          fontSize: 15,
+                          fontSize: 14,
+                          height: 1.3,
                         ),
                       ),
-                      if (lastCard.technologies.isNotEmpty) ...[
-                        const SizedBox(height: 4),
-                        Text(
-                          'Chuẩn: ${lastCard.technologies.join(', ')}',
-                          style: const TextStyle(
-                            color: Color(0xFF065F46),
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
                     ],
                   ),
                 ),

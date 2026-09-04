@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'nfc_service.dart';
 
 /// Dịch vụ quản lý thông tin định danh Quán và tải dữ liệu từ máy chủ
 class QuanService {
@@ -28,6 +29,19 @@ class QuanService {
       if (response.statusCode == 200) {
         final decoded = jsonDecode(utf8.decode(response.bodyBytes))
             as Map<String, dynamic>;
+
+        // Nếu server chưa có danh sách members hoặc rỗng, nạp từ asset nội bộ
+        if (decoded['members'] == null || (decoded['members'] as List).isEmpty) {
+          try {
+            final assetStr =
+                await rootBundle.loadString('assets/data/quan_info.json');
+            final assetJson = jsonDecode(assetStr) as Map<String, dynamic>;
+            if (assetJson['members'] != null) {
+              decoded['members'] = assetJson['members'];
+            }
+          } catch (_) {}
+        }
+
         // Cache lại để dùng khi offline
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(keyCachedJson, jsonEncode(decoded));
@@ -50,7 +64,18 @@ class QuanService {
       final prefs = await SharedPreferences.getInstance();
       final cachedStr = prefs.getString(keyCachedJson);
       if (cachedStr != null && cachedStr.isNotEmpty) {
-        return jsonDecode(cachedStr) as Map<String, dynamic>;
+        final decoded = jsonDecode(cachedStr) as Map<String, dynamic>;
+        if (decoded['members'] == null || (decoded['members'] as List).isEmpty) {
+          try {
+            final assetStr =
+                await rootBundle.loadString('assets/data/quan_info.json');
+            final assetJson = jsonDecode(assetStr) as Map<String, dynamic>;
+            if (assetJson['members'] != null) {
+              decoded['members'] = assetJson['members'];
+            }
+          } catch (_) {}
+        }
+        return decoded;
       }
 
       // Đọc từ asset nếu cache chưa có
@@ -134,6 +159,111 @@ class QuanService {
 
         if (locMa == cleanMa && locPass == cleanPass) {
           return loc;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  /// Tìm kiếm member theo mã NFC (hỗ trợ NfcCardInfo hoặc chuỗi UID Hex / Dec)
+  /// Hỗ trợ trường "ma_nfc" trong member là dạng List hoặc chuỗi String đơn lẻ.
+  /// Tự động chuẩn hóa so khớp cả UID Hex (có hoặc không có dấu :) và UID Dec (202823747 hoặc 0202823747).
+  Future<Map<String, dynamic>?> findMemberByNfc(dynamic cardOrUid) async {
+    if (cardOrUid == null) return null;
+
+    final targetKeys = <String>{};
+
+    if (cardOrUid is NfcCardInfo) {
+      targetKeys.addAll(cardOrUid.allMatchingKeys);
+    } else {
+      final str = cardOrUid.toString().trim();
+      if (str.isEmpty) return null;
+
+      // Chuẩn hóa chuỗi đầu vào
+      targetKeys.add(str.toLowerCase());
+      targetKeys.add(str.replaceAll(':', '').toLowerCase());
+
+      // Nếu là chuỗi số thập phân
+      if (RegExp(r'^[0-9]+$').hasMatch(str)) {
+        final noZero = str.replaceFirst(RegExp(r'^0+'), '');
+        if (noZero.isNotEmpty) targetKeys.add(noZero);
+        targetKeys.add(str.padLeft(10, '0'));
+
+        try {
+          final bigVal = BigInt.tryParse(str);
+          if (bigVal != null) {
+            // Chuyển Decimal sang Hex (4 bytes Little Endian - chuẩn RFID)
+            final hex8 = bigVal.toRadixString(16).padLeft(8, '0');
+            if (hex8.length == 8) {
+              final b0 = hex8.substring(6, 8);
+              final b1 = hex8.substring(4, 6);
+              final b2 = hex8.substring(2, 4);
+              final b3 = hex8.substring(0, 2);
+              final reversedHex = '$b0$b1$b2$b3'.toLowerCase();
+              final reversedHexSeparated = '$b0:$b1:$b2:$b3'.toLowerCase();
+              targetKeys.add(reversedHex);
+              targetKeys.add(reversedHexSeparated);
+              // Cũng thêm dạng xuôi BE
+              targetKeys.add(hex8.toLowerCase());
+              targetKeys.add('$b3:$b2:$b1:$b0'.toLowerCase());
+            }
+          }
+        } catch (_) {}
+      }
+    }
+
+    if (targetKeys.isEmpty) return null;
+
+    final info = await getCachedQuanInfo() ?? await fetchQuanInfo();
+    if (info == null) return null;
+
+    final members = info['members'] as List<dynamic>?;
+    if (members == null || members.isEmpty) return null;
+
+    for (final m in members) {
+      if (m is! Map<String, dynamic>) continue;
+      final memberNfcRaw = m['ma_nfc'];
+      if (memberNfcRaw == null) continue;
+
+      // Gom tất cả các mã ma_nfc đã khai báo cho member này (dạng List hoặc String đơn)
+      final memberNfcList = <String>[];
+      if (memberNfcRaw is List) {
+        for (final item in memberNfcRaw) {
+          if (item != null) {
+            memberNfcList.add(item.toString().trim());
+          }
+        }
+      } else {
+        memberNfcList.add(memberNfcRaw.toString().trim());
+      }
+
+      // Kiểm tra từng mã xem có khớp với bất kỳ targetKey nào của thẻ không
+      for (final rawKey in memberNfcList) {
+        if (rawKey.isEmpty) continue;
+
+        // 1. So khớp trực tiếp chữ thường
+        final lower = rawKey.toLowerCase();
+        if (targetKeys.contains(lower)) {
+          return m;
+        }
+
+        // 2. Chuẩn hóa Hex bỏ dấu :
+        final cleanHex = lower.replaceAll(':', '');
+        if (targetKeys.contains(cleanHex)) {
+          return m;
+        }
+
+        // 3. Chuẩn hóa số Dec (bỏ số 0 đầu hoặc pad 10 số)
+        if (RegExp(r'^[0-9]+$').hasMatch(rawKey)) {
+          final noZero = rawKey.replaceFirst(RegExp(r'^0+'), '');
+          if (targetKeys.contains(noZero)) {
+            return m;
+          }
+          final padded10 = rawKey.padLeft(10, '0');
+          if (targetKeys.contains(padded10)) {
+            return m;
+          }
         }
       }
     }

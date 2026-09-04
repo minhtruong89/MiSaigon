@@ -47,9 +47,124 @@ class NfcCardInfo {
     DateTime? timestamp,
   }) : timestamp = timestamp ?? DateTime.now();
 
+  /// Danh sách byte của UID trích xuất từ uidRawHex
+  List<int> get uidBytes {
+    final clean = uidRawHex.replaceAll(RegExp(r'[^0-9a-fA-F]'), '');
+    final bytes = <int>[];
+    for (int i = 0; i < clean.length - 1; i += 2) {
+      final b = int.tryParse(clean.substring(i, i + 2), radix: 16);
+      if (b != null) bytes.add(b);
+    }
+    return bytes;
+  }
+
+  /// UID dạng Decimal (Little Endian - chuẩn đọc thẻ RFID thông dụng nhất)
+  /// Ví dụ: UID Hex 43:d8:16:0c -> Little Endian 0C16D843 -> Decimal 202823747
+  String? get uidDec {
+    final bytes = uidBytes;
+    if (bytes.isEmpty) return null;
+    try {
+      BigInt val = BigInt.zero;
+      for (int i = bytes.length - 1; i >= 0; i--) {
+        val = (val << 8) | BigInt.from(bytes[i]);
+      }
+      return val.toString();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// UID dạng Decimal chuẩn 10 chữ số (pad thêm số 0 ở đầu nếu chưa đủ 10 số)
+  /// Ví dụ: 202823747 -> 0202823747
+  String? get uidDecPadded {
+    final dec = uidDec;
+    if (dec == null) return null;
+    if (dec.length < 10) {
+      return dec.padLeft(10, '0');
+    }
+    return dec;
+  }
+
+  /// UID dạng Decimal (Big Endian - dự phòng cho một số loại đầu đọc)
+  String? get uidDecBigEndian {
+    final bytes = uidBytes;
+    if (bytes.isEmpty) return null;
+    try {
+      BigInt val = BigInt.zero;
+      for (int i = 0; i < bytes.length; i++) {
+        val = (val << 8) | BigInt.from(bytes[i]);
+      }
+      return val.toString();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  /// Tập hợp tất cả các mã định danh tương đương của thẻ (Hex và Dec)
+  Set<String> get allMatchingKeys {
+    final keys = <String>{};
+
+    // 1. Hex
+    final cleanHex = uidRawHex.trim().toLowerCase();
+    if (cleanHex.isNotEmpty) {
+      keys.add(cleanHex);
+    }
+    final formattedHex = uidHex.trim().toLowerCase();
+    if (formattedHex.isNotEmpty) {
+      keys.add(formattedHex);
+      keys.add(formattedHex.replaceAll(':', ''));
+    }
+
+    // 2. Dec Little Endian (chuẩn RFID)
+    final decLE = uidDec;
+    if (decLE != null && decLE.isNotEmpty) {
+      keys.add(decLE);
+      final noLeadingZero = decLE.replaceFirst(RegExp(r'^0+'), '');
+      if (noLeadingZero.isNotEmpty) keys.add(noLeadingZero);
+      keys.add(decLE.padLeft(10, '0'));
+    }
+
+    // 3. Dec Big Endian
+    final decBE = uidDecBigEndian;
+    if (decBE != null && decBE.isNotEmpty) {
+      keys.add(decBE);
+      final noLeadingZeroBE = decBE.replaceFirst(RegExp(r'^0+'), '');
+      if (noLeadingZeroBE.isNotEmpty) keys.add(noLeadingZeroBE);
+      keys.add(decBE.padLeft(10, '0'));
+    }
+
+    // 4. Hỗ trợ thẻ 7 byte (Mifare Ultralight/NTAG)
+    final bytes = uidBytes;
+    if (bytes.length == 7) {
+      try {
+        BigInt valFirst4 = BigInt.zero;
+        for (int i = 3; i >= 0; i--) {
+          valFirst4 = (valFirst4 << 8) | BigInt.from(bytes[i]);
+        }
+        final s1 = valFirst4.toString();
+        keys.add(s1);
+        keys.add(s1.padLeft(10, '0'));
+        final s1NoZero = s1.replaceFirst(RegExp(r'^0+'), '');
+        if (s1NoZero.isNotEmpty) keys.add(s1NoZero);
+
+        BigInt valLast4 = BigInt.zero;
+        for (int i = 6; i >= 3; i--) {
+          valLast4 = (valLast4 << 8) | BigInt.from(bytes[i]);
+        }
+        final s2 = valLast4.toString();
+        keys.add(s2);
+        keys.add(s2.padLeft(10, '0'));
+        final s2NoZero = s2.replaceFirst(RegExp(r'^0+'), '');
+        if (s2NoZero.isNotEmpty) keys.add(s2NoZero);
+      } catch (_) {}
+    }
+
+    return keys;
+  }
+
   @override
   String toString() {
-    return 'NfcCardInfo(UID: $uidHex, Tech: $technologies, NDEF: $ndefPayload)';
+    return 'NfcCardInfo(UID Hex: $uidHex, Dec: $uidDec / $uidDecPadded, Tech: $technologies, NDEF: $ndefPayload)';
   }
 }
 

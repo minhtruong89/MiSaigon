@@ -76,5 +76,44 @@
       "url": "https://dtri2206.github.io/freemeals-website/?location=TVMNGL",
       "password": "mngl"
     }
+  ],
+  "members": [
+    {
+      "ma_khach": "kh_0001",
+      "ho_va_ten": "Lê Văn An",
+      "link_qr": "https://dtri2206.github.io/freemeals-website/quet.html?kh=kh_0001"
+    },
+    {
+      "ma_khach": "kh_0002",
+      "ho_va_ten": "Nguyễn Đức Trí",
+      "link_qr": "https://dtri2206.github.io/freemeals-website/quet.html?kh=kh_0002"
+    },
+    {
+      "ma_khach": "kh_0003",
+      "ho_va_ten": "Nguyễn Thị Lệ",
+      "link_qr": "https://dtri2206.github.io/freemeals-website/quet.html?kh=kh_0003"
+    },
+    {
+      "ma_khach": "nt_0004",
+      "ho_va_ten": "Đoàn Văn Xuân (test)",
+      "link_qr": "https://dtri2206.github.io/freemeals-website/quet.html?kh=nt_0004"
+    },
+    {
+      "ma_khach": "gl_0005",
+      "ho_va_ten": "Trần Thị Minh (test)",
+      "link_qr": "https://dtri2206.github.io/freemeals-website/quet.html?kh=gl_0005"
+    },
+    {
+      "ma_khach": "nc4_0006",
+      "ho_va_ten": "Nguyễn Văn Hải (test)",
+      "ma_nfc": [ "43:d8:16:0c", "202823747" ],
+      "link_qr": "https://dtri2206.github.io/freemeals-website/quet.html?kh=nc4_0006"
+    },
+    {
+      "ma_khach": "kh_0005",
+      "ho_va_ten": "Nguyễn Văn Tài",
+      "ma_nfc": [ "63:09:79:11", "293144931" ],
+      "link_qr": "https://dtri2206.github.io/freemeals-website/quet.html?kh=kh_0005"
+    }
   ]
 }

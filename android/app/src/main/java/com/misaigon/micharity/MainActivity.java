@@ -10,6 +10,7 @@ import android.media.AudioManager;
 import android.media.AudioTrack;
 import android.media.Ringtone;
 import android.media.RingtoneManager;
+import android.media.ToneGenerator;
 import android.net.Uri;
 import android.nfc.NdefMessage;
 import android.nfc.NdefRecord;
@@ -18,6 +19,8 @@ import android.nfc.Tag;
 import android.nfc.tech.Ndef;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.VibrationEffect;
+import android.os.Vibrator;
 import android.provider.Settings;
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
@@ -92,13 +95,18 @@ public class MainActivity extends FlutterActivity {
                 }
             });
 
-        // Native Audio Channel (AudioTrack direct PCM output to Loudspeaker)
+        // Native Audio Channel (ToneGenerator + AudioTrack direct output + Vibrator)
         new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL_AUDIO)
             .setMethodCallHandler(new MethodChannel.MethodCallHandler() {
                 @Override
                 public void onMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
                     if (call.method.equals("playBeep")) {
+                        triggerNativeVibration(180);
+                        playNativeTone();
                         playNativeBeep();
+                        result.success(true);
+                    } else if (call.method.equals("vibrate")) {
+                        triggerNativeVibration(150);
                         result.success(true);
                     } else {
                         result.notImplemented();
@@ -208,7 +216,8 @@ public class MainActivity extends FlutterActivity {
                         NfcAdapter.FLAG_READER_NFC_B |
                         NfcAdapter.FLAG_READER_NFC_F |
                         NfcAdapter.FLAG_READER_NFC_V |
-                        NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK;
+                        NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK |
+                        NfcAdapter.FLAG_READER_NO_PLATFORM_SOUNDS;
 
             nfcAdapter.enableReaderMode(this, new NfcAdapter.ReaderCallback() {
                 @Override
@@ -297,9 +306,6 @@ public class MainActivity extends FlutterActivity {
     }
 
     private void onTagDiscoveredInternal(Tag tag) {
-        // Phát tiếng BÍP native ngay lập tức không cần chờ qua Flutter
-        playNativeBeep();
-
         final Map<String, Object> map = parseTagToMap(tag);
         logToFlutter("Tag detected! UID: " + map.get("uidHex") + ", Standards: " + map.get("technologies"));
         runOnUiThread(new Runnable() {
@@ -392,6 +398,47 @@ public class MainActivity extends FlutterActivity {
         }
     }
 
+    private void triggerNativeVibration(int durationMs) {
+        try {
+            Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+            if (v != null && v.hasVibrator()) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    v.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE));
+                } else {
+                    v.vibrate(durationMs);
+                }
+            }
+        } catch (Exception ignored) {}
+    }
+
+    private void playNativeTone() {
+        try {
+            final ToneGenerator tg = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
+            tg.startTone(ToneGenerator.TONE_PROP_BEEP, 200);
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        tg.release();
+                    } catch (Exception ignored) {}
+                }
+            }, 350);
+        } catch (Exception e) {
+            try {
+                final ToneGenerator alt = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
+                alt.startTone(ToneGenerator.TONE_PROP_BEEP, 200);
+                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            alt.release();
+                        } catch (Exception ignored) {}
+                    }
+                }, 350);
+            } catch (Exception ignored) {}
+        }
+    }
+
     private void playNativeBeep() {
         try {
             if (beepSamples == null) {
@@ -400,8 +447,8 @@ public class MainActivity extends FlutterActivity {
 
             int sampleRate = 44100;
             AudioAttributes audioAttributes = new AudioAttributes.Builder()
-                .setUsage(AudioAttributes.USAGE_MEDIA)
-                .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+                .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                 .build();
 
             AudioFormat audioFormat = new AudioFormat.Builder()
@@ -410,10 +457,17 @@ public class MainActivity extends FlutterActivity {
                 .setChannelMask(AudioFormat.CHANNEL_OUT_MONO)
                 .build();
 
-            AudioTrack track = new AudioTrack(
+            int minBufferSize = AudioTrack.getMinBufferSize(
+                sampleRate,
+                AudioFormat.CHANNEL_OUT_MONO,
+                AudioFormat.ENCODING_PCM_16BIT
+            );
+            int bufferSize = Math.max(beepSamples.length * 2, minBufferSize > 0 ? minBufferSize : 4096);
+
+            final AudioTrack track = new AudioTrack(
                 audioAttributes,
                 audioFormat,
-                beepSamples.length * 2,
+                bufferSize,
                 AudioTrack.MODE_STATIC,
                 AudioManager.AUDIO_SESSION_ID_GENERATE
             );
@@ -421,6 +475,16 @@ public class MainActivity extends FlutterActivity {
             track.write(beepSamples, 0, beepSamples.length);
             track.setVolume(1.0f);
             track.play();
+
+            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        track.stop();
+                        track.release();
+                    } catch (Exception ignored) {}
+                }
+            }, 400);
         } catch (Exception e) {
             // Fallback RingtoneManager to notification stream
             try {
@@ -429,8 +493,7 @@ public class MainActivity extends FlutterActivity {
                 if (ringtone != null) {
                     ringtone.play();
                 }
-            } catch (Exception ignored) {
-            }
+            } catch (Exception ignored) {}
         }
     }
 }

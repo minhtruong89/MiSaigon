@@ -33,6 +33,7 @@ class _WorkingScreenState extends State<WorkingScreen> {
   @override
   void initState() {
     super.initState();
+    widget.controller.stopNfcScanning();
     _initWebViewController();
   }
 

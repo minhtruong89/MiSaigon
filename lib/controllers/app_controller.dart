@@ -50,9 +50,19 @@ class AppController extends ChangeNotifier {
   NfcSupportStatus get nfcStatus => _nfcStatus;
   bool get isNfcSupported => _nfcStatus != NfcSupportStatus.notSupported;
 
-  NfcCardInfo? _lastDetectedCard;
-  NfcCardInfo? get lastDetectedCard => _lastDetectedCard;
+  NfcCardInfo? _unregisteredCard;
+  NfcCardInfo? get unregisteredCard => _unregisteredCard;
+  NfcCardInfo? get lastDetectedCard => _unregisteredCard;
   bool get isNfcEnabled => _nfcStatus == NfcSupportStatus.enabled;
+
+  String? _currentScannedNfcCode;
+  String? get currentScannedNfcCode => _currentScannedNfcCode;
+
+  void clearUnregisteredCard() {
+    _unregisteredCard = null;
+    _currentScannedNfcCode = null;
+    notifyListeners();
+  }
 
   /// Kiểm tra và cập nhật trạng thái NFC
   Future<void> checkNfcStatus() async {
@@ -101,33 +111,143 @@ class AppController extends ChangeNotifier {
 
   /// Xử lý khi phát hiện thẻ RFID/NFC
   Future<void> onNfcCardDetected(NfcCardInfo cardInfo) async {
-    debugPrint('========================================');
-    debugPrint('[NFC/RFID] QUÉT THÀNH CÔNG THẺ THÀNH VIÊN!');
-    debugPrint('[NFC/RFID] UID (Hex có dấu hai chấm): ${cardInfo.uidHex}');
-    debugPrint('[NFC/RFID] UID (Hex liền): ${cardInfo.uidRawHex}');
-    debugPrint('[NFC/RFID] Công nghệ thẻ (Standards): ${cardInfo.technologies.join(', ')}');
-    if (cardInfo.ndefPayload != null && cardInfo.ndefPayload!.isNotEmpty) {
-      debugPrint('[NFC/RFID] Dữ liệu NDEF: ${cardInfo.ndefPayload}');
+    // 1. Chống duplicate: Nếu đang xử lý hoặc không ở chế độ STANDBY -> Bỏ qua
+    if (_isProcessingQr || _mode != AppMode.standby) {
+      return;
     }
-    debugPrint('[NFC/RFID] Raw Tag Data: ${cardInfo.rawData}');
-    debugPrint('[NFC/RFID] Thời điểm quét: ${cardInfo.timestamp.toIso8601String()}');
+
+    // Khóa xử lý ngay lập tức để chặn các sự kiện NFC phát tiếp theo khi thẻ vẫn còn áp lưng máy
+    _isProcessingQr = true;
+    _currentScannedNfcCode = cardInfo.uidHex;
+
+    debugPrint('========================================');
+    debugPrint('[NFC/RFID] PHÁT HIỆN THẺ RFID/NFC:');
+    debugPrint('[NFC/RFID] UID Hex: ${cardInfo.uidHex} (raw: ${cardInfo.uidRawHex})');
+    debugPrint('[NFC/RFID] UID Dec: ${cardInfo.uidDec ?? 'N/A'} (10-số: ${cardInfo.uidDecPadded ?? 'N/A'})');
+    debugPrint('[NFC/RFID] Công nghệ thẻ: ${cardInfo.technologies.join(', ')}');
     debugPrint('========================================');
 
     developer.log(
-      'Thẻ NFC/RFID phát hiện: UID=${cardInfo.uidHex}, Tech=${cardInfo.technologies}',
+      'Thẻ NFC/RFID phát hiện: UID Hex=${cardInfo.uidHex}, Dec=${cardInfo.uidDec}, Tech=${cardInfo.technologies}',
       name: 'AppController',
     );
 
-    _lastDetectedCard = cardInfo;
+    // 2. Tra cứu trong danh sách "members" xem có "ma_nfc" khớp với thẻ không (khớp Hex hoặc Dec)
+    final member = await _quanService.findMemberByNfc(cardInfo);
+
+    if (member != null) {
+      final linkQr = member['link_qr']?.toString();
+      final tenKhach = member['ho_va_ten'] ?? member['ma_khach'] ?? 'Thành viên';
+
+      if (linkQr != null && linkQr.trim().isNotEmpty) {
+        final trimmedUrl = linkQr.trim();
+
+        debugPrint('========================================');
+        debugPrint('[NFC/RFID] KHỚP THÀNH VIÊN THÀNH CÔNG!');
+        debugPrint('[NFC/RFID] Khách: $tenKhach (${member['ma_khach']})');
+        debugPrint('[NFC/RFID] Chuyển tiếp tới link_qr: $trimmedUrl');
+        debugPrint('========================================');
+
+        _currentUrl = trimmedUrl;
+        _isFinishSuccess = true;
+        _unregisteredCard = null;
+
+        // 3. Phát đúng 1 tiếng BÍP thành công giống như lúc quét mã QR
+        debugPrint('[NFC/RFID] Phát tiếng BÍP thành công!');
+        await _soundService.playSuccessBeep();
+
+        // 4. Tắt phiên quét NFC khi chuyển sang màn hình làm việc
+        await stopNfcScanning();
+
+        // 5. Chuyển sang WORKING (WebView) hiển thị link_qr của thành viên
+        _mode = AppMode.working;
+        notifyListeners();
+        return;
+      }
+    }
+
+    // Nếu thẻ không có trong danh sách thành viên:
+    _isProcessingQr = false; // Mở lại khóa để cho phép quẹt thẻ khác
+    debugPrint('[NFC/RFID] Thẻ UID Hex: ${cardInfo.uidHex}, Dec: ${cardInfo.uidDec} chưa được đăng ký trong danh sách members.');
+    _unregisteredCard = cardInfo;
     notifyListeners();
-
-    // Phát âm thanh BÍP giống như quét mã QR
-    await _soundService.playSuccessBeep();
-
-    // Chưa cần chuyển qua working screen kêu web (giữ nguyên ở standby)
+    _soundService.vibrateOnly();
   }
 
-  /// Hoàn tất kiểm tra ở SplashScreen và chuyển sang STANDBY
+  /// Xử lý mã thẻ NFC/RFID nhập từ TextField hoặc quét từ đầu đọc ngoại vi (USB/Bluetooth)
+  Future<bool> processNfcInput(String input) async {
+    final clean = input.trim();
+    if (clean.isEmpty) return false;
+
+    // Nếu đang trong tiến trình xử lý hoặc không ở STANDBY -> bỏ qua
+    if (_isProcessingQr || _mode != AppMode.standby) {
+      return false;
+    }
+
+    _isProcessingQr = true;
+    _currentScannedNfcCode = clean;
+
+    debugPrint('========================================');
+    debugPrint('[NFC/RFID Reader] NHẬN MÃ TỪ ĐẦU ĐỌC/EDIT TEXT: $clean');
+    debugPrint('========================================');
+
+    developer.log(
+      'NFC input từ đầu đọc/bàn phím: $clean',
+      name: 'AppController',
+    );
+
+    // Tra cứu trong danh sách members
+    final member = await _quanService.findMemberByNfc(clean);
+
+    if (member != null) {
+      final linkQr = member['link_qr']?.toString();
+      final tenKhach = member['ho_va_ten'] ?? member['ma_khach'] ?? 'Thành viên';
+
+      if (linkQr != null && linkQr.trim().isNotEmpty) {
+        final trimmedUrl = linkQr.trim();
+
+        debugPrint('========================================');
+        debugPrint('[NFC/RFID Reader] KHỚP THÀNH VIÊN THÀNH CÔNG!');
+        debugPrint('[NFC/RFID Reader] Khách: $tenKhach (${member['ma_khach']})');
+        debugPrint('[NFC/RFID Reader] Chuyển tiếp tới link_qr: $trimmedUrl');
+        debugPrint('========================================');
+
+        _currentUrl = trimmedUrl;
+        _isFinishSuccess = true;
+        _unregisteredCard = null;
+
+        // Phát đúng 1 tiếng BÍP thành công
+        debugPrint('[NFC/RFID Reader] Phát tiếng BÍP thành công!');
+        await _soundService.playSuccessBeep();
+
+        // Tắt phiên quét NFC
+        await stopNfcScanning();
+
+        // Chuyển sang WORKING (WebView)
+        _mode = AppMode.working;
+        notifyListeners();
+        return true;
+      }
+    }
+
+    // Không tìm thấy member:
+    _isProcessingQr = false;
+    debugPrint('[NFC/RFID Reader] Mã "$clean" chưa được đăng ký trong danh sách members.');
+
+    // Tạo NfcCardInfo để giao diện hiển thị cảnh báo
+    final rawHex = clean.replaceAll(':', '').replaceAll(RegExp(r'[^0-9a-fA-F]'), '');
+    _unregisteredCard = NfcCardInfo(
+      uidHex: clean,
+      uidRawHex: rawHex.isNotEmpty ? rawHex : clean,
+      technologies: ['ExternalReader'],
+      rawData: {'input': clean},
+    );
+    notifyListeners();
+    _soundService.vibrateOnly();
+    return false;
+  }
+
+  /// Hoàn tất kiểm tra ở SplashScreen hoặc khi quay lại STANDBY
   void setReady({String? maQuan, String? tenQuan}) {
     if (maQuan != null) _currentMaQuan = maQuan;
     if (tenQuan != null) _currentTenQuan = tenQuan;
@@ -135,6 +255,8 @@ class AppController extends ChangeNotifier {
     _isProcessingQr = false;
     _currentUrl = null;
     _isFinishSuccess = true;
+    _unregisteredCard = null; // Reset tab quẹt thẻ về trạng thái sạch ban đầu
+    _currentScannedNfcCode = null;
     checkNfcStatus();
     notifyListeners();
   }
@@ -169,7 +291,10 @@ class AppController extends ChangeNotifier {
     // 4. Phát đúng 1 tiếng BÍP
     await _soundService.playSuccessBeep();
 
-    // 5. Chuyển sang WORKING (WebView)
+    // 5. Tắt phiên quét NFC khi chuyển sang màn hình làm việc
+    await stopNfcScanning();
+
+    // 6. Chuyển sang WORKING (WebView)
     _mode = AppMode.working;
     notifyListeners();
 
