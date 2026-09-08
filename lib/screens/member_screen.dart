@@ -211,7 +211,6 @@ class _MemberScreenState extends State<MemberScreen>
   /// Khi đếm ngược hoàn thành: Gọi API 3. Xác nhận suất ăn (POST /misaigon/checkin)
   Future<void> _performCheckin() async {
     setState(() {
-      _isConfirming = false;
       _isSubmittingCheckin = true;
     });
 
@@ -255,6 +254,7 @@ class _MemberScreenState extends State<MemberScreen>
         // Chuyển sang giao diện xác nhận thành công
         if (mounted) {
           setState(() {
+            _isConfirming = false;
             _isCheckinSuccess = true;
           });
         }
@@ -268,6 +268,11 @@ class _MemberScreenState extends State<MemberScreen>
         });
       } else {
         // Lỗi nghiệp vụ từ server
+        if (mounted) {
+          setState(() {
+            _isConfirming = false;
+          });
+        }
         if (result.code == 'rate_limited') {
           setState(() {
             _isRateLimited = true;
@@ -297,6 +302,9 @@ class _MemberScreenState extends State<MemberScreen>
       }
     } catch (e) {
       if (mounted) {
+        setState(() {
+          _isConfirming = false;
+        });
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Lỗi: $e'),
@@ -431,29 +439,6 @@ class _MemberScreenState extends State<MemberScreen>
                 color: Color(0xFF00A4E8),
                 fontSize: 16,
                 fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    if (_isSubmittingCheckin) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: const [
-            CircularProgressIndicator(
-              color: Color(0xFF00A4E8),
-              strokeWidth: 3.5,
-            ),
-            SizedBox(height: 18),
-            Text(
-              'Đang xác nhận suất ăn với máy chủ...',
-              style: TextStyle(
-                color: Color(0xFF00A4E8),
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
               ),
             ),
           ],
@@ -770,7 +755,8 @@ class _MemberScreenState extends State<MemberScreen>
                   width: double.infinity,
                   height: 150,
                   child: ElevatedButton(
-                    onPressed: _onCancelConfirmation,
+                    onPressed:
+                        _isSubmittingCheckin ? null : _onCancelConfirmation,
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFFE50000),
                       foregroundColor: Colors.white,
