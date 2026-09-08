@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '../models/checkin_result.dart';
+import '../models/meal_history_item.dart';
 import '../models/member_info.dart';
 
 class MemberApiException implements Exception {
@@ -185,6 +186,74 @@ class MemberApiService {
         code: 'network_error',
         message: 'Lỗi kết nối máy chủ ($e). Vui lòng thử lại.',
       );
+    }
+  }
+
+  /// Gọi API 2. Lịch sử ăn của thành viên:
+  /// POST /misaigon/mealHistory
+  /// Gửi: { "ma_kh": "kh_0005" }
+  /// Nhận: { "result": "success", "ma_kh": "kh_0005", "lich_su": [ { "thoi_gian": "...", "ten_quan": "...", "so_suat": 1 } ] }
+  Future<List<MealHistoryItem>> getMealHistory({
+    required String maKh,
+    required String bearerToken,
+    Duration timeout = const Duration(seconds: 10),
+  }) async {
+    final cleanMaKh = maKh.trim();
+    if (cleanMaKh.isEmpty) {
+      return [];
+    }
+
+    final url = Uri.parse('$baseUrl/mealHistory');
+    final headers = {
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer ${bearerToken.trim()}',
+    };
+    final body = jsonEncode({'ma_kh': cleanMaKh});
+
+    debugPrint('==================================================');
+    debugPrint('[API REQUEST MEAL_HISTORY] -> GỬI ĐẾN SERVER:');
+    debugPrint('[API REQUEST MEAL_HISTORY] URL: $url');
+    debugPrint('[API REQUEST MEAL_HISTORY] Headers: $headers');
+    debugPrint('[API REQUEST MEAL_HISTORY] Body: $body');
+    debugPrint('==================================================');
+
+    developer.log('Gửi mealHistory API: $body', name: 'MemberApiService');
+
+    try {
+      final response = await _httpClient
+          .post(url, headers: headers, body: body)
+          .timeout(timeout);
+
+      final utf8Body = utf8.decode(response.bodyBytes);
+
+      debugPrint('==================================================');
+      debugPrint('[API RESPONSE MEAL_HISTORY] <- PHẢN HỒI TỪ SERVER:');
+      debugPrint('[API RESPONSE MEAL_HISTORY] HTTP Status: ${response.statusCode}');
+      debugPrint('[API RESPONSE MEAL_HISTORY] Body: $utf8Body');
+      debugPrint('==================================================');
+
+      developer.log(
+        'Phản hồi mealHistory API [${response.statusCode}]: $utf8Body',
+        name: 'MemberApiService',
+      );
+
+      final Map<String, dynamic> json = jsonDecode(utf8Body);
+      if (json['result'] == 'success') {
+        final rawList = json['lich_su'] as List<dynamic>? ?? [];
+        return rawList
+            .map((e) => MealHistoryItem.fromJson(e as Map<String, dynamic>))
+            .toList();
+      } else {
+        final msg = json['message']?.toString() ?? 'Không thể tải lịch sử.';
+        debugPrint('[API ERROR MEAL_HISTORY] $msg');
+        throw MemberApiException(code: json['code']?.toString(), message: msg);
+      }
+    } catch (e) {
+      debugPrint('==================================================');
+      debugPrint('[API EXCEPTION MEAL_HISTORY] Lỗi kết nối: $e');
+      debugPrint('==================================================');
+      developer.log('Lỗi gọi mealHistory: $e', name: 'MemberApiService');
+      rethrow;
     }
   }
 }

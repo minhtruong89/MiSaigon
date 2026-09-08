@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import '../controllers/app_controller.dart';
 import '../models/checkin_result.dart';
+import '../models/meal_history_item.dart';
 import '../models/member_info.dart';
 import '../services/member_api_service.dart';
 import '../widgets/dinh_danh_dialog.dart';
@@ -324,15 +325,29 @@ class _MemberScreenState extends State<MemberScreen>
   }
 
   void _onViewHistory() {
-    _resetIdleTimer();
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Đã chọn Xem lịch sử các suất ăn'),
-        backgroundColor: Color(0xFF00A4E8),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    _showMealHistoryDialog(context);
   }
+
+  /// Popup hiển thị lịch sử các suất ăn của thành viên
+  Future<void> _showMealHistoryDialog(BuildContext context) async {
+    _idleTimeoutTimer?.cancel();
+    _successTimer?.cancel();
+
+    await showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (dialogContext) {
+        return _MealHistoryDialog(
+          controller: widget.controller,
+          maKhach: widget.maKhach,
+          hoTen: _memberInfo?.hoTen,
+        );
+      },
+    );
+
+    _resetIdleTimer();
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -1017,5 +1032,318 @@ class DashedCirclePainter extends CustomPainter {
     return oldDelegate.color != color ||
         oldDelegate.strokeWidth != strokeWidth ||
         oldDelegate.dashCount != dashCount;
+  }
+}
+
+/// Popup hiển thị lịch sử các suất ăn của thành viên
+class _MealHistoryDialog extends StatefulWidget {
+  final AppController controller;
+  final String maKhach;
+  final String? hoTen;
+
+  const _MealHistoryDialog({
+    required this.controller,
+    required this.maKhach,
+    this.hoTen,
+  });
+
+  @override
+  State<_MealHistoryDialog> createState() => _MealHistoryDialogState();
+}
+
+class _MealHistoryDialogState extends State<_MealHistoryDialog> {
+  late final Future<List<MealHistoryItem>> _historyFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _historyFuture = _fetchHistory();
+  }
+
+  Future<List<MealHistoryItem>> _fetchHistory() async {
+    final bearer = await widget.controller.quanService.getBearerToken();
+    if (bearer == null || bearer.isEmpty) {
+      throw Exception('Không tìm thấy Bearer token');
+    }
+    return widget.controller.memberApiService.getMealHistory(
+      maKh: widget.maKhach,
+      bearerToken: bearer,
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final mediaQuery = MediaQuery.of(context);
+    final dialogWidth = math.min(mediaQuery.size.width * 0.9, 440.0);
+    final dialogMaxHeight = math.min(mediaQuery.size.height * 0.8, 560.0);
+
+    return Dialog(
+      backgroundColor: Colors.white,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Container(
+        width: dialogWidth,
+        constraints: BoxConstraints(
+          maxHeight: dialogMaxHeight,
+        ),
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Header
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDEF0F9),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.history_rounded,
+                    color: Color(0xFF00A4E8),
+                    size: 26,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Lịch sử các suất ăn',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E293B),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Bác: ${widget.hoTen ?? widget.maKhach}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          color: Color(0xFF64748B),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            const Divider(height: 1, color: Color(0xFFE2E8F0)),
+            const SizedBox(height: 10),
+
+            // Content body
+            Flexible(
+              child: FutureBuilder<List<MealHistoryItem>>(
+                future: _historyFuture,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const SizedBox(
+                      height: 180,
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            CircularProgressIndicator(
+                              color: Color(0xFF00A4E8),
+                              strokeWidth: 3.5,
+                            ),
+                            SizedBox(height: 16),
+                            Text(
+                              'Đang tải lịch sử suất ăn...',
+                              style: TextStyle(
+                                color: Color(0xFF00A4E8),
+                                fontWeight: FontWeight.w600,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  if (snapshot.hasError) {
+                    return SizedBox(
+                      height: 180,
+                      child: Center(
+                        child: Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(
+                                Icons.error_outline_rounded,
+                                color: Color(0xFFDC2626),
+                                size: 40,
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                'Lỗi tải lịch sử: ${snapshot.error}',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  color: Color(0xFFDC2626),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  final historyList = snapshot.data ?? [];
+                  if (historyList.isEmpty) {
+                    return const SizedBox(
+                      height: 180,
+                      child: Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.receipt_long_outlined,
+                              color: Color(0xFF94A3B8),
+                              size: 46,
+                            ),
+                            SizedBox(height: 12),
+                            Text(
+                              'Chưa có lịch sử nhận suất ăn nào.',
+                              style: TextStyle(
+                                color: Color(0xFF64748B),
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  }
+
+                  return ListView.separated(
+                    shrinkWrap: true,
+                    physics: const BouncingScrollPhysics(),
+                    itemCount: historyList.length,
+                    separatorBuilder: (context, index) => const Divider(
+                      height: 1,
+                      color: Color(0xFFE2E8F0),
+                    ),
+                    itemBuilder: (context, index) {
+                      final item = historyList[index];
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 10,
+                          horizontal: 4,
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: const BoxDecoration(
+                                color: Color(0xFFDEF0F9),
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(
+                                Icons.restaurant_rounded,
+                                color: Color(0xFF00A4E8),
+                                size: 18,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    item.tenQuan,
+                                    style: const TextStyle(
+                                      fontSize: 14.5,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF1E293B),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 3),
+                                  Text(
+                                    item.thoiGian,
+                                    style: const TextStyle(
+                                      fontSize: 13,
+                                      color: Color(0xFF64748B),
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFDEF0F9),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: const Color(0xFF00A4E8),
+                                  width: 1.2,
+                                ),
+                              ),
+                              child: Text(
+                                '${item.soSuat} suất',
+                                style: const TextStyle(
+                                  color: Color(0xFF00A4E8),
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 14),
+
+            // Nút Đóng
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF00A4E8),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: const Text(
+                  'Đóng',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
