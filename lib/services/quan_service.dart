@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer' as developer;
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -22,9 +23,12 @@ class QuanService {
   /// Tải file quan_info.json từ server
   Future<Map<String, dynamic>?> fetchQuanInfo() async {
     try {
+      debugPrint('[QUAN_SERVICE] -> GET $quanInfoUrl');
       final response = await _httpClient
           .get(Uri.parse(quanInfoUrl))
           .timeout(const Duration(seconds: 10));
+
+      debugPrint('[QUAN_SERVICE] <- HTTP Status: ${response.statusCode}');
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(utf8.decode(response.bodyBytes))
@@ -47,10 +51,12 @@ class QuanService {
         await prefs.setString(keyCachedJson, jsonEncode(decoded));
         return decoded;
       } else {
+        debugPrint('[QUAN_SERVICE] Lỗi tải quan_info: HTTP ${response.statusCode}');
         developer.log('Lỗi tải quan_info: HTTP ${response.statusCode}',
             name: 'QuanService');
       }
     } catch (e) {
+      debugPrint('[QUAN_SERVICE] Lỗi kết nối tải quan_info: $e');
       developer.log('Lỗi kết nối tải quan_info: $e', name: 'QuanService');
     }
 
@@ -84,6 +90,29 @@ class QuanService {
       return jsonDecode(assetStr) as Map<String, dynamic>;
     } catch (e) {
       developer.log('Lỗi đọc cache/asset quan_info: $e', name: 'QuanService');
+    }
+    return null;
+  }
+
+  /// Lấy Bearer token từ app_config trong quan_info.json (hoặc asset nội bộ)
+  Future<String?> getBearerToken() async {
+    try {
+      final info = await getCachedQuanInfo() ?? await fetchQuanInfo();
+      final appConfig = info?['app_config'] as Map<String, dynamic>?;
+      final bearer = appConfig?['bearer']?.toString().trim();
+      if (bearer != null && bearer.isNotEmpty) {
+        return bearer;
+      }
+    } catch (_) {}
+
+    try {
+      final assetStr =
+          await rootBundle.loadString('assets/data/quan_info.json');
+      final assetJson = jsonDecode(assetStr) as Map<String, dynamic>;
+      final appConfig = assetJson['app_config'] as Map<String, dynamic>?;
+      return appConfig?['bearer']?.toString().trim();
+    } catch (e) {
+      developer.log('Lỗi đọc bearer token: $e', name: 'QuanService');
     }
     return null;
   }

@@ -2,6 +2,8 @@ import 'dart:async';
 import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import '../models/app_mode.dart';
+import '../models/member_info.dart';
+import '../services/member_api_service.dart';
 import '../services/nfc_service.dart';
 import '../services/qr_service.dart';
 import '../services/quan_service.dart';
@@ -12,9 +14,11 @@ class AppController extends ChangeNotifier {
   final SoundService _soundService;
   final QuanService _quanService;
   final NfcService _nfcService;
+  final MemberApiService _memberApiService;
 
   AppMode _mode = AppMode.splash;
   String? _currentUrl;
+  String? _currentMaKhach;
   bool _isProcessingQr = false;
   Timer? _finishTimer;
 
@@ -29,22 +33,30 @@ class AppController extends ChangeNotifier {
   /// Quy trình mới: Đã tắt quét mã QR mặc định (vẫn giữ code để kích hoạt khi cần)
   bool enableQrScanning;
 
+  /// Đổi cơ chế qua App xử lý giao diện thay vì mở Webview (vẫn giữ code Web khi cần)
+  bool useNativeMemberScreen;
+
   AppController({
     SoundService? soundService,
     QuanService? quanService,
     NfcService? nfcService,
+    MemberApiService? memberApiService,
     this.enableQrScanning = false,
+    this.useNativeMemberScreen = true,
   })  : _soundService = soundService ?? SoundService(),
         _quanService = quanService ?? QuanService(),
-        _nfcService = nfcService ?? NfcService();
+        _nfcService = nfcService ?? NfcService(),
+        _memberApiService = memberApiService ?? MemberApiService();
 
   // Getters
   AppMode get mode => _mode;
   String? get currentUrl => _currentUrl;
+  String? get currentMaKhach => _currentMaKhach;
   bool get isProcessingQr => _isProcessingQr;
   SoundService get soundService => _soundService;
   QuanService get quanService => _quanService;
   NfcService get nfcService => _nfcService;
+  MemberApiService get memberApiService => _memberApiService;
   String? get currentMaQuan => _currentMaQuan;
   String? get currentTenQuan => _currentTenQuan;
   bool get isFinishSuccess => _isFinishSuccess;
@@ -144,17 +156,41 @@ class AppController extends ChangeNotifier {
 
     if (member != null) {
       final linkQr = member['link_qr']?.toString();
+      final maKhach = member['ma_khach']?.toString()?.trim();
       final tenKhach = member['ho_va_ten'] ?? member['ma_khach'] ?? 'Thành viên';
 
-      if (linkQr != null && linkQr.trim().isNotEmpty) {
+      if (useNativeMemberScreen && maKhach != null && maKhach.isNotEmpty) {
+        debugPrint('========================================');
+        debugPrint('[NFC/RFID] KHỚP THÀNH VIÊN THÀNH CÔNG (APP GIAO DIỆN)!');
+        debugPrint('[NFC/RFID] Khách: $tenKhach ($maKhach)');
+        debugPrint('========================================');
+
+        _currentMaKhach = maKhach;
+        _currentUrl = linkQr?.trim();
+        _isFinishSuccess = true;
+        _unregisteredCard = null;
+
+        // 3. Phát đúng 1 tiếng BÍP thành công
+        debugPrint('[NFC/RFID] Phát tiếng BÍP thành công!');
+        await _soundService.playSuccessBeep();
+
+        // 4. Tắt phiên quét NFC khi chuyển sang màn hình làm việc
+        await stopNfcScanning();
+
+        // 5. Chuyển sang MEMBER screen
+        _mode = AppMode.member;
+        notifyListeners();
+        return;
+      } else if (linkQr != null && linkQr.trim().isNotEmpty) {
         final trimmedUrl = linkQr.trim();
 
         debugPrint('========================================');
-        debugPrint('[NFC/RFID] KHỚP THÀNH VIÊN THÀNH CÔNG!');
+        debugPrint('[NFC/RFID] KHỚP THÀNH VIÊN THÀNH CÔNG (WEB)!');
         debugPrint('[NFC/RFID] Khách: $tenKhach (${member['ma_khach']})');
         debugPrint('[NFC/RFID] Chuyển tiếp tới link_qr: $trimmedUrl');
         debugPrint('========================================');
 
+        _currentMaKhach = maKhach;
         _currentUrl = trimmedUrl;
         _isFinishSuccess = true;
         _unregisteredCard = null;
@@ -208,17 +244,41 @@ class AppController extends ChangeNotifier {
 
     if (member != null) {
       final linkQr = member['link_qr']?.toString();
+      final maKhach = member['ma_khach']?.toString()?.trim();
       final tenKhach = member['ho_va_ten'] ?? member['ma_khach'] ?? 'Thành viên';
 
-      if (linkQr != null && linkQr.trim().isNotEmpty) {
+      if (useNativeMemberScreen && maKhach != null && maKhach.isNotEmpty) {
+        debugPrint('========================================');
+        debugPrint('[NFC/RFID Reader] KHỚP THÀNH VIÊN THÀNH CÔNG (APP GIAO DIỆN)!');
+        debugPrint('[NFC/RFID Reader] Khách: $tenKhach ($maKhach)');
+        debugPrint('========================================');
+
+        _currentMaKhach = maKhach;
+        _currentUrl = linkQr?.trim();
+        _isFinishSuccess = true;
+        _unregisteredCard = null;
+
+        // Phát đúng 1 tiếng BÍP thành công
+        debugPrint('[NFC/RFID Reader] Phát tiếng BÍP thành công!');
+        await _soundService.playSuccessBeep();
+
+        // Tắt phiên quét NFC
+        await stopNfcScanning();
+
+        // Chuyển sang MEMBER screen
+        _mode = AppMode.member;
+        notifyListeners();
+        return true;
+      } else if (linkQr != null && linkQr.trim().isNotEmpty) {
         final trimmedUrl = linkQr.trim();
 
         debugPrint('========================================');
-        debugPrint('[NFC/RFID Reader] KHỚP THÀNH VIÊN THÀNH CÔNG!');
+        debugPrint('[NFC/RFID Reader] KHỚP THÀNH VIÊN THÀNH CÔNG (WEB)!');
         debugPrint('[NFC/RFID Reader] Khách: $tenKhach (${member['ma_khach']})');
         debugPrint('[NFC/RFID Reader] Chuyển tiếp tới link_qr: $trimmedUrl');
         debugPrint('========================================');
 
+        _currentMaKhach = maKhach;
         _currentUrl = trimmedUrl;
         _isFinishSuccess = true;
         _unregisteredCard = null;
@@ -337,9 +397,18 @@ class AppController extends ChangeNotifier {
     developer.log('Reset về STANDBY', name: 'AppController');
     _cancelFinishTimer();
     _currentUrl = null;
+    _currentMaKhach = null;
     _isProcessingQr = false;
+    _unregisteredCard = null;
+    _currentScannedNfcCode = null;
     _mode = AppMode.standby;
     notifyListeners();
+  }
+
+  /// Quay lại STANDBY từ MemberScreen hoặc các màn hình khác
+  Future<void> goToStandby() async {
+    resetToStandby();
+    await startNfcScanning();
   }
 
   void _cancelFinishTimer() {

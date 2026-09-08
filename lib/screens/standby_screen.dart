@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../controllers/app_controller.dart';
 import '../models/app_mode.dart';
+import '../widgets/thin_gear_icon.dart';
+export '../widgets/thin_gear_icon.dart';
 
 /// Màn hình STANDBY: Giao diện Kiosk nhận thẻ RFID / NFC theo thiết kế mới
 class StandbyScreen extends StatefulWidget {
@@ -812,86 +814,3 @@ class _LeftBlockArrowPainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// Widget vẽ icon bánh răng thanh mảnh, sắc nét theo đúng hình mockup
-class ThinGearIcon extends StatelessWidget {
-  final double size;
-  final Color color;
-  final double strokeWidth;
-
-  const ThinGearIcon({
-    super.key,
-    this.size = 38,
-    this.color = const Color(0xFF00A4E8),
-    this.strokeWidth = 1.8,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return CustomPaint(
-      size: Size(size, size),
-      painter: _ThinGearPainter(
-        color: color,
-        strokeWidth: strokeWidth,
-      ),
-    );
-  }
-}
-
-class _ThinGearPainter extends CustomPainter {
-  final Color color;
-  final double strokeWidth;
-
-  _ThinGearPainter({
-    required this.color,
-    required this.strokeWidth,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final cx = size.width / 2;
-    final cy = size.height / 2;
-    final rOuter = size.width * 0.44;
-    final rRoot = size.width * 0.35;
-    final rInner = size.width * 0.16;
-
-    const nTeeth = 8;
-    final points = <Offset>[];
-
-    for (var i = 0; i < nTeeth; i++) {
-      final baseAng = i * (2 * math.pi / nTeeth);
-      final a1 = baseAng - 0.12;
-      final a2 = baseAng + 0.12;
-      final a3 = baseAng + math.pi / nTeeth - 0.15;
-      final a4 = baseAng + math.pi / nTeeth + 0.15;
-
-      points.add(Offset(cx + rOuter * math.cos(a1), cy + rOuter * math.sin(a1)));
-      points.add(Offset(cx + rOuter * math.cos(a2), cy + rOuter * math.sin(a2)));
-      points.add(Offset(cx + rRoot * math.cos(a3), cy + rRoot * math.sin(a3)));
-      points.add(Offset(cx + rRoot * math.cos(a4), cy + rRoot * math.sin(a4)));
-    }
-
-    final path = Path();
-    if (points.isNotEmpty) {
-      path.moveTo(points[0].dx, points[0].dy);
-      for (var i = 1; i < points.length; i++) {
-        path.lineTo(points[i].dx, points[i].dy);
-      }
-      path.close();
-    }
-
-    final paint = Paint()
-      ..color = color
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    canvas.drawPath(path, paint);
-    canvas.drawCircle(Offset(cx, cy), rInner, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _ThinGearPainter oldDelegate) {
-    return oldDelegate.color != color || oldDelegate.strokeWidth != strokeWidth;
-  }
-}

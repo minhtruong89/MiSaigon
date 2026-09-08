@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'controllers/app_controller.dart';
 import 'models/app_mode.dart';
 import 'screens/finish_screen.dart';
+import 'screens/member_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/standby_screen.dart';
 import 'screens/working_screen.dart';
@@ -49,6 +50,12 @@ class MiCharityApp extends StatelessWidget {
 
             case AppMode.finish:
               return FinishScreen(controller: controller);
+
+            case AppMode.member:
+              return MemberScreen(
+                controller: controller,
+                maKhach: controller.currentMaKhach ?? '',
+              );
           }
         },
       ),

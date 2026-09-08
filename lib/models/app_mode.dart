@@ -11,4 +11,7 @@ enum AppMode {
 
   /// Màn hình Cảm ơn hiển thị trong 3 giây sau khi đóng WebView
   finish,
+
+  /// Màn hình thành viên (App gốc gọi API /misaigon/memberInfo)
+  member,
 }
