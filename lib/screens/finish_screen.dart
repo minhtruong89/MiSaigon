@@ -20,13 +20,13 @@ class FinishScreen extends StatelessWidget {
         : 'Đã hủy phiên làm việc';
 
     final gradientColors = isSuccess
-        ? const [Color(0xFF10B981), Color(0xFF0D5CB6)]
-        : const [Color(0xFF0D5CB6), Color(0xFF1E88E5)];
+        ? const [Color(0xFF10B981), Color(0xFF00A4E8)]
+        : const [Color(0xFF00A4E8), Color(0xFF38BDF8)];
 
     final iconData = isSuccess ? Icons.check_rounded : Icons.logout_rounded;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFEBF3FC),
+      backgroundColor: const Color(0xFFDEF0F9),
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -38,7 +38,7 @@ class FinishScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(20),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x1A0D5CB6),
+                    color: Color(0x1400A4E8),
                     blurRadius: 20,
                     offset: Offset(0, 8),
                   ),
@@ -63,7 +63,7 @@ class FinishScreen extends StatelessWidget {
                         BoxShadow(
                           color: isSuccess
                               ? const Color(0x3310B981)
-                              : const Color(0x330D5CB6),
+                              : const Color(0x3300A4E8),
                           blurRadius: 18,
                           offset: const Offset(0, 6),
                         ),
@@ -85,7 +85,7 @@ class FinishScreen extends StatelessWidget {
                     title,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      color: Color(0xFF0D5CB6),
+                      color: Color(0xFF00A4E8),
                       fontSize: 32,
                       fontWeight: FontWeight.w800,
                       letterSpacing: 0.5,
@@ -120,7 +120,7 @@ class FinishScreen extends StatelessWidget {
                             value: value,
                             backgroundColor: const Color(0xFFE2E8F0),
                             valueColor: const AlwaysStoppedAnimation<Color>(
-                              Color(0xFF0D5CB6),
+                              Color(0xFF00A4E8),
                             ),
                             minHeight: 6,
                           ),
@@ -130,7 +130,7 @@ class FinishScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   const Text(
-                    'Đang quay lại màn hình quét...',
+                    'Đang quay lại màn hình chính...',
                     style: TextStyle(
                       color: Color(0xFF94A3B8),
                       fontSize: 13,

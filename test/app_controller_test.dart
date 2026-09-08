@@ -27,7 +27,10 @@ void main() {
 
     setUp(() {
       mockSoundService = MockSoundService();
-      controller = AppController(soundService: mockSoundService);
+      controller = AppController(
+        soundService: mockSoundService,
+        enableQrScanning: true,
+      );
     });
 
     tearDown(() {
@@ -113,6 +116,20 @@ void main() {
       expect(newScan, isTrue);
       expect(mockSoundService.beepCount, equals(2));
       expect(controller.mode, equals(AppMode.working));
+    });
+
+    test('Khi enableQrScanning = false (mặc định), onQrDetected luôn trả về false', () async {
+      final disabledController = AppController(
+        soundService: mockSoundService,
+        enableQrScanning: false,
+      );
+      disabledController.setReady();
+
+      final result = await disabledController.onQrDetected('https://dtri2206.github.io/test');
+      expect(result, isFalse);
+      expect(disabledController.mode, equals(AppMode.standby));
+      expect(disabledController.currentUrl, isNull);
+      disabledController.dispose();
     });
   });
 }

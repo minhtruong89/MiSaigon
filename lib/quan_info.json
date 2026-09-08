@@ -106,13 +106,13 @@
     {
       "ma_khach": "nc4_0006",
       "ho_va_ten": "Nguyễn Văn Hải (test)",
-      "ma_nfc": [ "43:d8:16:0c", "202823747"],
+      "ma_nfc": [ "63:09:79:11", "293144931"],
       "link_qr": "https://dtri2206.github.io/freemeals-website/quet.html?kh=nc4_0006"
     },
     {
       "ma_khach": "kh_0005",
       "ho_va_ten": "Nguyễn Văn Tài",
-	  "ma_nfc": [ "63:09:79:11", "293144931"],
+	  "ma_nfc": [ "93:d2:e1:11", "300012179"],
       "link_qr": "https://dtri2206.github.io/freemeals-website/quet.html?kh=kh_0005"
     }
   ]

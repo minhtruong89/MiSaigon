@@ -3,10 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../controllers/app_controller.dart';
 import '../models/app_mode.dart';
-import '../services/nfc_service.dart';
-import '../widgets/camera_preview_widget.dart';
 
-/// Màn hình STANDBY: Mặc định chờ quét thẻ thành viên
+/// Màn hình STANDBY: Giao diện Kiosk nhận thẻ RFID / NFC theo thiết kế mới
 class StandbyScreen extends StatefulWidget {
   final AppController controller;
 
@@ -20,14 +18,13 @@ class StandbyScreen extends StatefulWidget {
 }
 
 class _StandbyScreenState extends State<StandbyScreen>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   bool _isDialogOpen = false;
-  bool _hasPromptedNfc = false;
-  // Mặc định luôn là 1 (Quẹt thẻ NFC) để KHÔNG bao giờ khởi tạo Camera ngầm ở frame đầu tiên
-  int _selectedScanTab = 1;
-
   final TextEditingController _nfcTextController = TextEditingController();
   Timer? _nfcDebounceTimer;
+
+  // Controller hiệu ứng chớp chu kỳ 1 giây (dương 8 âm 2: 800ms hiện, 200ms ẩn)
+  late final AnimationController _blinkController;
 
   @override
   void initState() {
@@ -36,15 +33,11 @@ class _StandbyScreenState extends State<StandbyScreen>
     widget.controller.addListener(_onControllerChanged);
     HardwareKeyboard.instance.addHandler(_handleGlobalHardwareKey);
 
-    // Nếu thiết bị chắc chắn không hỗ trợ NFC thì mới chuyển về Quét QR (0)
-    if (widget.controller.nfcStatus == NfcSupportStatus.notSupported) {
-      _selectedScanTab = 0;
-    } else {
-      _selectedScanTab = 1;
-    }
-
-    // Xóa trạng thái thẻ chưa đăng ký để tab quẹt thẻ luôn sạch sẽ ban đầu
-    widget.controller.clearUnregisteredCard();
+    // Chu kỳ 1 giây: 800ms sáng / hiện, 200ms tắt / ẩn
+    _blinkController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
+    )..repeat();
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initNfcAndScan();
@@ -52,18 +45,26 @@ class _StandbyScreenState extends State<StandbyScreen>
   }
 
   void _onControllerChanged() {
-    if (mounted) {
-      final currentCode = widget.controller.currentScannedNfcCode;
-      if (currentCode != null && currentCode != _nfcTextController.text) {
-        _nfcTextController.text = currentCode;
-      } else if (widget.controller.unregisteredCard == null && currentCode == null) {
-        if (_nfcTextController.text.isNotEmpty) {
-          _nfcTextController.clear();
-        }
-      }
-      setState(() {});
-      _syncNfcScanning();
+    if (!mounted) return;
+
+    final lastCard = widget.controller.lastDetectedCard;
+    if (lastCard != null) {
+      ScaffoldMessenger.of(context).hideCurrentSnackBar();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Thẻ chưa đăng ký thành viên: ${lastCard.uidHex}',
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
+          backgroundColor: const Color(0xFFD97706),
+          duration: const Duration(seconds: 3),
+        ),
+      );
+      widget.controller.clearUnregisteredCard();
     }
+
+    setState(() {});
+    _syncNfcScanning();
   }
 
   String? _extractCharFromKeyEvent(KeyEvent event) {
@@ -94,9 +95,10 @@ class _StandbyScreenState extends State<StandbyScreen>
     return null;
   }
 
+  /// Lắng nghe dữ liệu nhập từ đầu đọc RFID USB ngoại vi
   bool _handleGlobalHardwareKey(KeyEvent event) {
-    // Chỉ nhận sự kiện khi đang ở tab Quẹt thẻ NFC (1) và ở chế độ STANDBY
-    if (_selectedScanTab != 1 || widget.controller.mode != AppMode.standby) {
+    // Chỉ nhận sự kiện khi ở chế độ STANDBY
+    if (widget.controller.mode != AppMode.standby) {
       return false;
     }
 
@@ -121,7 +123,6 @@ class _StandbyScreenState extends State<StandbyScreen>
             0,
             _nfcTextController.text.length - 1,
           );
-          setState(() {});
         }
         return true;
       }
@@ -132,15 +133,12 @@ class _StandbyScreenState extends State<StandbyScreen>
         final isTimerActive =
             _nfcDebounceTimer != null && _nfcDebounceTimer!.isActive;
 
-        // Nếu lần quét trước đã xong hoặc trống, bắt đầu mã mới
         if (!isTimerActive) {
           _nfcTextController.text = char;
         } else {
           _nfcTextController.text += char;
         }
-        setState(() {});
 
-        // Đợi 350ms sau khi nhận ký tự cuối để kiểm tra thành viên
         _nfcDebounceTimer?.cancel();
         _nfcDebounceTimer = Timer(const Duration(milliseconds: 350), () {
           final trimmed = _nfcTextController.text.trim();
@@ -156,37 +154,13 @@ class _StandbyScreenState extends State<StandbyScreen>
 
   Future<void> _checkMemberFromInput(String code) async {
     if (!mounted) return;
-    final success = await widget.controller.processNfcInput(code);
-    if (!success && mounted) {
-      setState(() {});
-    }
+    _nfcTextController.clear();
+    await widget.controller.processNfcInput(code);
   }
 
   Future<void> _initNfcAndScan() async {
     await widget.controller.checkNfcStatus();
     if (!mounted) return;
-
-    if (widget.controller.nfcStatus == NfcSupportStatus.disabled &&
-        !_hasPromptedNfc) {
-      _hasPromptedNfc = true;
-      _showNfcEnableDialog();
-    }
-
-    // Nếu máy không có NFC thì chuyển sang QR (0), nếu có NFC thì giữ nguyên tab NFC (1)
-    if (widget.controller.nfcStatus == NfcSupportStatus.notSupported) {
-      if (_selectedScanTab != 0) {
-        setState(() {
-          _selectedScanTab = 0;
-        });
-      }
-    } else {
-      if (_selectedScanTab != 1 && widget.controller.isNfcEnabled) {
-        setState(() {
-          _selectedScanTab = 1;
-        });
-      }
-    }
-
     _syncNfcScanning();
   }
 
@@ -207,24 +181,10 @@ class _StandbyScreenState extends State<StandbyScreen>
   }
 
   @override
-  void didUpdateWidget(covariant StandbyScreen oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.controller != oldWidget.controller) {
-      oldWidget.controller.removeListener(_onControllerChanged);
-      widget.controller.addListener(_onControllerChanged);
-    }
-    _syncNfcScanning();
-  }
-
-  @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       widget.controller.checkNfcStatus().then((_) {
-        if (mounted && widget.controller.isNfcEnabled) {
-          setState(() {
-            _selectedScanTab = 1;
-          });
-        }
+        _syncNfcScanning();
       });
     } else if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive ||
@@ -236,6 +196,7 @@ class _StandbyScreenState extends State<StandbyScreen>
 
   @override
   void dispose() {
+    _blinkController.dispose();
     HardwareKeyboard.instance.removeHandler(_handleGlobalHardwareKey);
     _nfcDebounceTimer?.cancel();
     _nfcTextController.dispose();
@@ -245,624 +206,257 @@ class _StandbyScreenState extends State<StandbyScreen>
     super.dispose();
   }
 
+  String _formatTenQuan(String? tenQuan) {
+    if (tenQuan == null || tenQuan.trim().isEmpty) {
+      return 'Quán 34D Yersin, P Nguyễn Thái bình, TP HCM';
+    }
+    final trimmed = tenQuan.trim();
+    if (trimmed.toLowerCase().startsWith('quán')) {
+      return trimmed;
+    }
+    return 'Quán $trimmed';
+  }
+
   @override
   Widget build(BuildContext context) {
-    // Tự động tắt scan camera khi đang mở popup hoặc khi ở tab Quẹt thẻ NFC để giải phóng phần cứng
-    final isScanning = widget.controller.mode == AppMode.standby &&
-        !widget.controller.isProcessingQr &&
-        !_isDialogOpen &&
-        _selectedScanTab == 0;
-
     return Scaffold(
-      backgroundColor: const Color(0xFFEBF3FC),
+      backgroundColor: const Color(0xFFDEF0F9),
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const SizedBox(height: 8),
-
-              // Header: Chương trình từ thiện Mì Sài Gòn 0đ (Xanh lam phong cách Web)
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [
-                      Color(0xFF0D5CB6),
-                      Color(0xFF1565C0),
-                    ],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(16),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x330D5CB6),
-                      blurRadius: 12,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Stack(
-                  children: [
-                    // Nội dung tiêu đề chính giữa
-                    Center(
-                      child: Column(
-                        children: [
-                          Text(
-                            'Chương trình từ thiện'.toUpperCase(),
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(
-                              color: Color(0xFFE3F2FD),
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 1.2,
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          const Text(
-                            'Mì Sài Gòn 0đ',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 26,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                          if (widget.controller.currentTenQuan != null ||
-                              widget.controller.currentMaQuan != null) ...[
-                            const SizedBox(height: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 3),
+        child: Stack(
+          children: [
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // 1. KHU VỰC PHÍA TRÊN: Khe thẻ đỏ mép trái, 2 mũi tên vàng, logo Mì Sài Gòn 0vnđ
+                Expanded(
+                  flex: 5,
+                  child: Padding(
+                    padding: const EdgeInsets.only(top: 10, bottom: 10, right: 16),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        // Khe cắm thẻ màu đỏ sát mép trái (chớp chu kỳ 1s: 800ms hiện, 200ms ẩn)
+                        Positioned(
+                          left: 0,
+                          child: AnimatedBuilder(
+                            animation: _blinkController,
+                            builder: (context, child) {
+                              final isVisible = _blinkController.value < 0.8;
+                              return Opacity(
+                                opacity: isVisible ? 1.0 : 0.0,
+                                child: child,
+                              );
+                            },
+                            child: Container(
+                              width: 32,
+                              height: 220,
                               decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                widget.controller.currentTenQuan ??
-                                    'Mã quán: ${widget.controller.currentMaQuan}',
-                                textAlign: TextAlign.center,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
+                                color: const Color(0xFFE50000),
+                                borderRadius: const BorderRadius.only(
+                                  topRight: Radius.circular(22),
+                                  bottomRight: Radius.circular(22),
                                 ),
+                                border: Border.all(
+                                  color: const Color(0xFF990000),
+                                  width: 2.5,
+                                ),
+                                boxShadow: const [
+                                  BoxShadow(
+                                    color: Color(0x33E50000),
+                                    blurRadius: 10,
+                                    offset: Offset(3, 0),
+                                  ),
+                                ],
                               ),
                             ),
-                          ],
-                        ],
-                      ),
-                    ),
+                          ),
+                        ),
 
-                    // Nút menu nhỏ góc phải ở trên
-                    Positioned(
-                      top: -4,
-                      right: -8,
-                      child: PopupMenuButton<String>(
-                        icon: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.more_vert_rounded,
-                            color: Colors.white,
-                            size: 20,
-                          ),
-                        ),
-                        color: Colors.white,
-                        elevation: 6,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        onSelected: (value) {
-                          if (value == 'change_dinh_danh') {
-                            _showChangeDinhDanhDialog(context);
-                          }
-                        },
-                        itemBuilder: (context) => [
-                          const PopupMenuItem<String>(
-                            value: 'change_dinh_danh',
-                            child: Row(
-                              children: [
-                                Icon(
-                                  Icons.storefront_rounded,
-                                  color: Color(0xFF0D5CB6),
-                                  size: 20,
+                        // Cụm 2 mũi tên vàng trỏ trái & Logo Mì Sài Gòn 0vnđ
+                        Padding(
+                          padding: const EdgeInsets.only(left: 44),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // 2 mũi tên vàng dày trỏ sang trái (chớp chu kỳ 1s: 800ms hiện, 200ms ẩn)
+                              AnimatedBuilder(
+                                animation: _blinkController,
+                                builder: (context, child) {
+                                  final isVisible = _blinkController.value < 0.8;
+                                  return Opacity(
+                                    opacity: isVisible ? 1.0 : 0.0,
+                                    child: child,
+                                  );
+                                },
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: const [
+                                    LeftBlockArrow(width: 54, height: 60),
+                                    SizedBox(height: 32),
+                                    LeftBlockArrow(width: 54, height: 60),
+                                  ],
                                 ),
-                                SizedBox(width: 10),
-                                Text(
-                                  'Thay đổi định danh quán',
-                                  style: TextStyle(
-                                    color: Color(0xFF1E293B),
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 14,
+                              ),
+
+                              const SizedBox(width: 14),
+
+                              // Logo Mì Sài Gòn 0vnđ
+                              Expanded(
+                                child: Center(
+                                  child: ConstrainedBox(
+                                    constraints: const BoxConstraints(
+                                      maxWidth: 220,
+                                      maxHeight: 220,
+                                    ),
+                                    child: Image.asset(
+                                      'assets/images/app_icon.png',
+                                      fit: BoxFit.contain,
+                                      errorBuilder: (context, error, stackTrace) => const Icon(
+                                        Icons.restaurant_rounded,
+                                        size: 80,
+                                        color: Color(0xFF00A4E8),
+                                      ),
+                                    ),
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Hướng dẫn người dùng (Khung trắng nổi bật)
-              Container(
-                padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: const Color(0xFFD6E4F0),
-                    width: 1.2,
                   ),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x0A0D5CB6),
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
                 ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      _selectedScanTab == 1
-                          ? Icons.contactless_rounded
-                          : Icons.qr_code_scanner_rounded,
-                      color: const Color(0xFF0D5CB6),
-                      size: 26,
-                    ),
-                    const SizedBox(width: 12),
-                    Flexible(
-                      child: Text(
-                        _selectedScanTab == 1
-                            ? 'Để thẻ NFC vào khe\nhoặc áp vào mặt lưng máy'
-                            : (widget.controller.isNfcSupported
-                                ? 'Đưa mã QR trước màn hình\nhoặc chuyển sang quẹt thẻ NFC'
-                                : 'Đưa mã QR trước màn hình'),
+
+                // 2. KHU VỰC Ở GIỮA: Dải băng màu xanh lam "CHO THẺ VÔ KHE"
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  color: const Color(0xFF00A4E8),
+                  child: Center(
+                    child: AnimatedBuilder(
+                      animation: _blinkController,
+                      builder: (context, child) {
+                        final isVisible = _blinkController.value < 0.8;
+                        return Opacity(
+                          opacity: isVisible ? 1.0 : 0.0,
+                          child: child,
+                        );
+                      },
+                      child: const Text(
+                        'CHO THẺ VÔ KHE',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Color(0xFF1E293B),
-                          fontSize: 17,
-                          fontWeight: FontWeight.w700,
-                          height: 1.3,
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 26,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2.0,
                         ),
                       ),
                     ),
-                  ],
-                ),
-              ),
-
-              // Cảnh báo nếu máy hỗ trợ NFC nhưng đang tắt trong Cài đặt
-              if (widget.controller.nfcStatus == NfcSupportStatus.disabled) ...[
-                const SizedBox(height: 10),
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF7ED),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFFED7AA)),
                   ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.nfc_rounded,
-                          color: Color(0xFFEA580C), size: 20),
-                      const SizedBox(width: 8),
-                      const Expanded(
-                        child: Text(
-                          'NFC đang tắt. Bật NFC để quét thẻ.',
+                ),
+
+                // 3. KHU VỰC PHÍA DƯỚI: Logo Quỹ Từ Thiện Bông Sen, Chương trình, Tên quán
+                Expanded(
+                  flex: 6,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Spacer(flex: 1),
+
+                        // Logo Quỹ Từ Thiện Bông Sen
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            maxWidth: 320,
+                            maxHeight: 110,
+                          ),
+                          child: Image.asset(
+                            'assets/images/logo_qbs.png',
+                            fit: BoxFit.contain,
+                            errorBuilder: (context, error, stackTrace) => const SizedBox(height: 80),
+                          ),
+                        ),
+
+                        const Spacer(flex: 1),
+
+                        // Tiêu đề chương trình
+                        const Text(
+                          'CHƯƠNG TRÌNH TỪ THIỆN',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
-                            color: Color(0xFF9A3412),
-                            fontSize: 13,
+                            color: Color(0xFF00A4E8),
+                            fontSize: 19,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+
+                        const SizedBox(height: 6),
+
+                        // Mì Sài gòn 0đ
+                        const Text(
+                          'Mì Sài gòn 0đ',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Color(0xFF00A4E8),
+                            fontSize: 34,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+
+                        const Spacer(flex: 2),
+
+                        // Hàng dưới cùng là "ten_quan" đã setup ở splash screen
+                        Text(
+                          _formatTenQuan(widget.controller.currentTenQuan),
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: Color(0xFF00A4E8),
+                            fontSize: 13.5,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                      ),
-                      TextButton(
-                        onPressed: () =>
-                            widget.controller.nfcService.openNfcSettings(),
-                        style: TextButton.styleFrom(
-                          foregroundColor: const Color(0xFFEA580C),
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
-                          minimumSize: Size.zero,
-                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        ),
-                        child: const Text('Bật NFC',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                      ),
-                    ],
+
+                        const SizedBox(height: 4),
+                      ],
+                    ),
                   ),
                 ),
               ],
+            ),
 
-              const SizedBox(height: 14),
-
-              // Tab chuyển đổi chế độ Quét QR / Quẹt thẻ NFC (khi thiết bị có hỗ trợ NFC)
-              if (widget.controller.isNfcSupported) ...[
-                Container(
-                  padding: const EdgeInsets.all(4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD6E4F0),
-                    borderRadius: BorderRadius.circular(14),
-                  ),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(10),
-                          onTap: () {
-                            if (_selectedScanTab != 0) {
-                              setState(() {
-                                _selectedScanTab = 0;
-                              });
-                            }
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: _selectedScanTab == 0
-                                   ? Colors.white
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: _selectedScanTab == 0
-                                  ? const [
-                                      BoxShadow(
-                                        color: Color(0x140D5CB6),
-                                        blurRadius: 4,
-                                        offset: Offset(0, 2),
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.qr_code_scanner_rounded,
-                                  size: 20,
-                                  color: _selectedScanTab == 0
-                                      ? const Color(0xFF0D5CB6)
-                                      : const Color(0xFF64748B),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Quét mã QR',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: _selectedScanTab == 0
-                                        ? FontWeight.bold
-                                        : FontWeight.w600,
-                                    color: _selectedScanTab == 0
-                                        ? const Color(0xFF0D5CB6)
-                                        : const Color(0xFF64748B),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 4),
-                      Expanded(
-                        child: InkWell(
-                          borderRadius: BorderRadius.circular(10),
-                          onTap: () {
-                            if (_selectedScanTab != 1) {
-                              setState(() {
-                                _selectedScanTab = 1;
-                              });
-                              // Đảm bảo phiên quét NFC được kickstart lại khi Camera tắt
-                              widget.controller.restartNfcScanning();
-                            }
-                          },
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(vertical: 10),
-                            decoration: BoxDecoration(
-                              color: _selectedScanTab == 1
-                                  ? const Color(0xFF0D5CB6)
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(10),
-                              boxShadow: _selectedScanTab == 1
-                                  ? const [
-                                      BoxShadow(
-                                        color: Color(0x330D5CB6),
-                                        blurRadius: 6,
-                                        offset: Offset(0, 2),
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.contactless_rounded,
-                                  size: 20,
-                                  color: _selectedScanTab == 1
-                                      ? Colors.white
-                                      : const Color(0xFF64748B),
-                                ),
-                                const SizedBox(width: 8),
-                                Text(
-                                  'Quẹt thẻ NFC',
-                                  style: TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: _selectedScanTab == 1
-                                        ? FontWeight.bold
-                                        : FontWeight.w600,
-                                    color: _selectedScanTab == 1
-                                        ? Colors.white
-                                        : const Color(0xFF64748B),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
+            // Icon bánh răng ở góc trên bên phải để mở trực tiếp popup "Định danh cho Quán"
+            Positioned(
+              top: 8,
+              right: 12,
+              child: IconButton(
+                icon: const Icon(
+                  Icons.settings_outlined,
+                  color: Color(0xFF00A4E8),
+                  size: 36,
                 ),
-                const SizedBox(height: 12),
-              ],
-
-              // Khung hiển thị: Camera Preview hoặc Giao diện đọc thẻ NFC
-              Expanded(
-                child: _selectedScanTab == 0
-                    ? Container(
-                        decoration: BoxDecoration(
-                          color: Colors.black,
-                          borderRadius: BorderRadius.circular(20),
-                          border: Border.all(
-                            color: const Color(0xFF0D5CB6),
-                            width: 2.5,
-                          ),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x220D5CB6),
-                              blurRadius: 16,
-                              offset: Offset(0, 6),
-                            ),
-                          ],
-                        ),
-                        child: CameraPreviewWidget(
-                          isScanningActive: isScanning,
-                          onBarcodeDetected: (rawValue) {
-                            widget.controller.onQrDetected(rawValue);
-                          },
-                        ),
-                      )
-                    : _buildNfcWaitingView(),
+                tooltip: 'Định danh cho Quán',
+                onPressed: () {
+                  _showChangeDinhDanhDialog(context);
+                },
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildNfcWaitingView() {
-    final lastCard = widget.controller.lastDetectedCard;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: const Color(0xFF0D5CB6),
-          width: 2.5,
-        ),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x140D5CB6),
-            blurRadius: 16,
-            offset: Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Icon NFC lớn với viền xanh
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: const Color(0xFFEBF3FC),
-                  border: Border.all(color: const Color(0xFF0D5CB6), width: 3),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x220D5CB6),
-                      blurRadius: 16,
-                      offset: Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: const Icon(
-                  Icons.contactless_rounded,
-                  size: 56,
-                  color: Color(0xFF0D5CB6),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Sẵn sàng nhận thẻ RFID / NFC',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 19,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF1E293B),
-                ),
-              ),
-              const SizedBox(height: 10),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFF1F5F9),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: const Color(0xFFE2E8F0)),
-                ),
-                child: const Text(
-                  'Vui lòng áp thẻ vào MẶT LƯNG điện thoại\n(khu vực gần cụm camera sau)',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Color(0xFF475569),
-                    fontWeight: FontWeight.w500,
-                    height: 1.4,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 14),
-              // Khung TextField nhận diện mã thẻ quét từ đầu đọc USB / NFC hoặc nhập tay
-              Container(
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(12),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x0A000000),
-                      blurRadius: 8,
-                      offset: Offset(0, 2),
-                    ),
-                  ],
-                ),
-                child: TextField(
-                  controller: _nfcTextController,
-                  readOnly: true,
-                  showCursor: false,
-                  enableInteractiveSelection: false,
-                  keyboardType: TextInputType.none,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF0D5CB6),
-                    letterSpacing: 0.5,
-                  ),
-                  decoration: InputDecoration(
-                    hintText: 'Chờ quét từ đầu đọc RFID / NFC...',
-                    hintStyle: TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.normal,
-                      color: Colors.grey.shade400,
-                    ),
-                    prefixIcon: const Icon(
-                      Icons.credit_card_rounded,
-                      color: Color(0xFF0D5CB6),
-                      size: 22,
-                    ),
-                    suffixIcon: _nfcTextController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear_rounded, size: 20),
-                            color: Colors.grey.shade500,
-                            onPressed: () {
-                              _nfcDebounceTimer?.cancel();
-                              _nfcTextController.clear();
-                              widget.controller.clearUnregisteredCard();
-                              setState(() {});
-                            },
-                          )
-                        : null,
-                    contentPadding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    filled: true,
-                    fillColor: const Color(0xFFF8FAFC),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(color: Color(0xFFCBD5E1)),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
-                      borderSide: const BorderSide(
-                        color: Color(0xFF0D5CB6),
-                        width: 2,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              if (lastCard != null) ...[
-                const SizedBox(height: 16),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFFBEB),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: const Color(0xFFF59E0B)),
-                  ),
-                  child: Column(
-                    children: [
-                      const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.info_outline_rounded,
-                              color: Color(0xFFD97706), size: 20),
-                          SizedBox(width: 8),
-                          Text(
-                            'THẺ CHƯA ĐĂNG KÝ THÀNH VIÊN',
-                            style: TextStyle(
-                              color: Color(0xFFB45309),
-                              fontWeight: FontWeight.w800,
-                              fontSize: 14,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Text(
-                        lastCard.uidDec != null
-                            ? 'UID Hex: ${lastCard.uidHex}\nUID Dec: ${lastCard.uidDec} (${lastCard.uidDecPadded})'
-                            : 'UID: ${lastCard.uidHex}',
-                        textAlign: TextAlign.center,
-                        style: const TextStyle(
-                          color: Color(0xFF92400E),
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                          height: 1.3,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
+  /// Popup "Định danh cho Quán" theo phong cách mới đồng bộ
   Future<void> _showChangeDinhDanhDialog(BuildContext context) async {
-    // Tạm dừng auto scan khi mở dialog
     setState(() {
       _isDialogOpen = true;
     });
@@ -891,12 +485,12 @@ class _StandbyScreenState extends State<StandbyScreen>
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEBF3FC),
+                      color: const Color(0xFFE1F3FB),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
                       Icons.storefront_rounded,
-                      color: Color(0xFF0D5CB6),
+                      color: Color(0xFF00A4E8),
                       size: 26,
                     ),
                   ),
@@ -933,14 +527,14 @@ class _StandbyScreenState extends State<StandbyScreen>
                       decoration: InputDecoration(
                         labelText: 'Mã định danh',
                         prefixIcon: const Icon(Icons.badge_outlined,
-                            color: Color(0xFF0D5CB6)),
+                            color: Color(0xFF00A4E8)),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(
-                              color: Color(0xFF0D5CB6), width: 2),
+                              color: Color(0xFF00A4E8), width: 2),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 14),
@@ -955,7 +549,7 @@ class _StandbyScreenState extends State<StandbyScreen>
                       decoration: InputDecoration(
                         labelText: 'Mật khẩu',
                         prefixIcon: const Icon(Icons.lock_outline,
-                            color: Color(0xFF0D5CB6)),
+                            color: Color(0xFF00A4E8)),
                         suffixIcon: IconButton(
                           icon: Icon(
                             obscurePassword
@@ -975,7 +569,7 @@ class _StandbyScreenState extends State<StandbyScreen>
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(
-                              color: Color(0xFF0D5CB6), width: 2),
+                              color: Color(0xFF00A4E8), width: 2),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 14),
@@ -1099,7 +693,7 @@ class _StandbyScreenState extends State<StandbyScreen>
                                         content: Text(
                                             'Đã cập nhật định danh: ${tenQuan ?? maQuan}'),
                                         backgroundColor:
-                                            const Color(0xFF0D5CB6),
+                                            const Color(0xFF00A4E8),
                                         duration: const Duration(seconds: 2),
                                       ),
                                     );
@@ -1113,7 +707,7 @@ class _StandbyScreenState extends State<StandbyScreen>
                                 }
                               },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0D5CB6),
+                          backgroundColor: const Color(0xFF00A4E8),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
@@ -1147,7 +741,6 @@ class _StandbyScreenState extends State<StandbyScreen>
       },
     );
 
-    // Kích hoạt lại auto scan sau khi đóng dialog
     if (mounted) {
       setState(() {
         _isDialogOpen = false;
@@ -1155,55 +748,71 @@ class _StandbyScreenState extends State<StandbyScreen>
       _syncNfcScanning();
     }
   }
+}
 
-  /// Hộp thoại nhắc nhở bật NFC nếu máy hỗ trợ nhưng đang tắt
-  Future<void> _showNfcEnableDialog() async {
-    if (!mounted) return;
-    await showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Row(
-          children: [
-            Icon(Icons.nfc_rounded, color: Color(0xFF0D5CB6), size: 26),
-            SizedBox(width: 10),
-            Text(
-              'Kích hoạt NFC',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF1E293B),
-              ),
-            ),
-          ],
-        ),
-        content: const Text(
-          'Thiết bị hỗ trợ quét thẻ NFC/RFID nhưng tính năng NFC đang TẮT trong cài đặt máy.\n\nBạn có muốn mở Cài đặt để bật NFC ngay bây giờ?',
-          style: TextStyle(fontSize: 14, height: 1.4, color: Color(0xFF334155)),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text('Để sau', style: TextStyle(color: Colors.grey)),
-          ),
-          ElevatedButton.icon(
-            onPressed: () {
-              Navigator.pop(ctx);
-              widget.controller.nfcService.openNfcSettings();
-            },
-            icon: const Icon(Icons.settings, size: 18),
-            label: const Text('Mở Cài đặt NFC'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF0D5CB6),
-              foregroundColor: Colors.white,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-            ),
-          ),
-        ],
-      ),
+/// Widget vẽ hình mũi tên vàng dạng khối dày trỏ sang trái
+class LeftBlockArrow extends StatelessWidget {
+  final double width;
+  final double height;
+
+  const LeftBlockArrow({
+    super.key,
+    this.width = 54,
+    this.height = 60,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size(width, height),
+      painter: _LeftBlockArrowPainter(),
     );
   }
+}
+
+class _LeftBlockArrowPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+
+    // Đầu mũi tên chiếm khoảng 52% chiều ngang
+    final headW = w * 0.52;
+    // Thân mũi tên ở giữa
+    final stemTop = h * 0.28;
+    final stemBottom = h * 0.72;
+
+    final path = Path()
+      ..moveTo(0, h / 2) // Đỉnh nhọn trỏ trái
+      ..lineTo(headW, 0) // Cạnh trên đầu mũi tên
+      ..lineTo(headW, stemTop) // Góc trên nối vào thân
+      ..lineTo(w, stemTop) // Cạnh trên thân
+      ..lineTo(w, stemBottom) // Đáy thân bên phải
+      ..lineTo(headW, stemBottom) // Cạnh dưới thân nối vào đầu
+      ..lineTo(headW, h) // Cạnh dưới đầu mũi tên
+      ..close();
+
+    // 1. Đổ bóng nhẹ
+    final shadowPaint = Paint()
+      ..color = const Color(0x33000000)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+    canvas.drawPath(path.shift(const Offset(1, 1.5)), shadowPaint);
+
+    // 2. Tô màu vàng tươi
+    final fillPaint = Paint()
+      ..color = const Color(0xFFFFDE00)
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(path, fillPaint);
+
+    // 3. Viền màu cam nổi bật
+    final strokePaint = Paint()
+      ..color = const Color(0xFFE65100)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.4
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawPath(path, strokePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

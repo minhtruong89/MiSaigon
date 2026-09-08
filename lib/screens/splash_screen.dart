@@ -93,7 +93,7 @@ class _SplashScreenState extends State<SplashScreen> {
       });
 
       // Delay 1s và chuyển sang STANDBY
-      await Future.delayed(const Duration(seconds: 1));
+      await Future.delayed(const Duration(seconds: 100));
       if (mounted) {
         widget.controller.setReady(
           maQuan: savedMaQuan,
@@ -192,12 +192,12 @@ class _SplashScreenState extends State<SplashScreen> {
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFEBF3FC),
+                      color: const Color(0xFFE1F3FB),
                       borderRadius: BorderRadius.circular(10),
                     ),
                     child: const Icon(
                       Icons.storefront_rounded,
-                      color: Color(0xFF0D5CB6),
+                      color: Color(0xFF00A4E8),
                       size: 26,
                     ),
                   ),
@@ -234,14 +234,14 @@ class _SplashScreenState extends State<SplashScreen> {
                       decoration: InputDecoration(
                         labelText: 'Mã định danh',
                         prefixIcon: const Icon(Icons.badge_outlined,
-                            color: Color(0xFF0D5CB6)),
+                            color: Color(0xFF00A4E8)),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(
-                              color: Color(0xFF0D5CB6), width: 2),
+                              color: Color(0xFF00A4E8), width: 2),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 14),
@@ -257,7 +257,7 @@ class _SplashScreenState extends State<SplashScreen> {
                         labelText: 'Mật khẩu',
                         hintText: 'Nhập mật khẩu quán',
                         prefixIcon: const Icon(Icons.lock_outline,
-                            color: Color(0xFF0D5CB6)),
+                            color: Color(0xFF00A4E8)),
                         suffixIcon: IconButton(
                           icon: Icon(
                             _obscurePassword
@@ -277,7 +277,7 @@ class _SplashScreenState extends State<SplashScreen> {
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(12),
                           borderSide: const BorderSide(
-                              color: Color(0xFF0D5CB6), width: 2),
+                              color: Color(0xFF00A4E8), width: 2),
                         ),
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 14),
@@ -421,7 +421,7 @@ class _SplashScreenState extends State<SplashScreen> {
                                 }
                               },
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF0D5CB6),
+                          backgroundColor: const Color(0xFF00A4E8),
                           foregroundColor: Colors.white,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
@@ -466,80 +466,79 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFEBF3FC),
+      backgroundColor: const Color(0xFFDEF0F9),
       body: SafeArea(
         child: Center(
           child: Padding(
-            padding: const EdgeInsets.all(32.0),
+            padding: const EdgeInsets.symmetric(horizontal: 28.0, vertical: 24.0),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // App Icon
-                Container(
-                  width: 140,
-                  height: 140,
-                  decoration: const BoxDecoration(
-                    color: Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Color(0x260D5CB6),
-                        blurRadius: 24,
-                        offset: Offset(0, 8),
-                      ),
-                    ],
+                const Spacer(),
+
+                // App Artwork (Mì Sài Gòn 0vnđ)
+                ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: 180,
+                    maxHeight: 180,
                   ),
-                  child: ClipOval(
-                    child: Image.asset(
-                      'assets/images/app_icon.png',
-                      fit: BoxFit.cover,
-                      errorBuilder: (context, error, stackTrace) {
-                        return Container(
-                          decoration: const BoxDecoration(
-                            shape: BoxShape.circle,
-                            gradient: LinearGradient(
-                              colors: [Color(0xFF0D5CB6), Color(0xFF1E88E5)],
-                            ),
-                          ),
-                          child: const Icon(
-                            Icons.volunteer_activism_rounded,
-                            size: 70,
-                            color: Colors.white,
-                          ),
-                        );
-                      },
-                    ),
+                  child: Image.asset(
+                    'assets/images/app_icon.png',
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) {
+                      return const Icon(
+                        Icons.restaurant_rounded,
+                        size: 80,
+                        color: Color(0xFF00A4E8),
+                      );
+                    },
                   ),
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: 20),
 
-                // App Title
+                // Tiêu đề chương trình
                 const Text(
-                  'Mì Sài Gòn',
+                  'CHƯƠNG TRÌNH TỪ THIỆN',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    color: Color(0xFF0D5CB6),
+                    color: Color(0xFF00A4E8),
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.5,
+                  ),
+                ),
+
+                const SizedBox(height: 6),
+
+                // Mì Sài gòn 0đ
+                const Text(
+                  'Mì Sài gòn 0đ',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xFF00A4E8),
                     fontSize: 34,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 0.5,
                   ),
                 ),
 
-                const SizedBox(height: 8),
+                const SizedBox(height: 24),
 
-                // Subtitle
-                const Text(
-                  'Dự án thuộc Quỹ Từ thiện Bông Sen',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Color(0xFF475569),
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
+                // Logo Quỹ Từ Thiện Bông Sen
+                ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: 240,
+                    maxHeight: 75,
+                  ),
+                  child: Image.asset(
+                    'assets/images/logo_qbs.png',
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => const SizedBox(height: 40),
                   ),
                 ),
 
-                const SizedBox(height: 48),
+                const Spacer(),
 
                 // Downloading Update Progress UI
                 if (_isDownloadingUpdate) ...[
@@ -550,7 +549,7 @@ class _SplashScreenState extends State<SplashScreen> {
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: const [
                         BoxShadow(
-                          color: Color(0x100D5CB6),
+                          color: Color(0x1400A4E8),
                           blurRadius: 12,
                           offset: Offset(0, 4),
                         ),
@@ -561,7 +560,7 @@ class _SplashScreenState extends State<SplashScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: const [
-                            Icon(Icons.system_update_rounded, color: Color(0xFF0D5CB6), size: 22),
+                            Icon(Icons.system_update_rounded, color: Color(0xFF00A4E8), size: 22),
                             SizedBox(width: 8),
                             Text(
                               'Đang cập nhật phiên bản mới',
@@ -580,7 +579,7 @@ class _SplashScreenState extends State<SplashScreen> {
                             value: _downloadProgress > 0 ? _downloadProgress : null,
                             minHeight: 10,
                             backgroundColor: const Color(0xFFE2E8F0),
-                            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF0D5CB6)),
+                            valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF00A4E8)),
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -602,7 +601,7 @@ class _SplashScreenState extends State<SplashScreen> {
                     child: CircularProgressIndicator(
                       strokeWidth: 3,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        Color(0xFF0D5CB6),
+                        Color(0xFF00A4E8),
                       ),
                     ),
                   ),
@@ -611,14 +610,14 @@ class _SplashScreenState extends State<SplashScreen> {
                     _statusText,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      color: Color(0xFF64748B),
+                      color: Color(0xFF00A4E8),
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 32),
 
                 // App Version
                 Container(
@@ -627,17 +626,19 @@ class _SplashScreenState extends State<SplashScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(20),
-                    border: Border.all(color: const Color(0xFFD6E4F0)),
+                    border: Border.all(color: const Color(0xFFBBE5FA)),
                   ),
                   child: Text(
                     'Phiên bản $_currentAppVersion',
                     style: const TextStyle(
-                      color: Color(0xFF64748B),
+                      color: Color(0xFF00A4E8),
                       fontSize: 13,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
+
+                const SizedBox(height: 8),
               ],
             ),
           ),

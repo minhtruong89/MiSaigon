@@ -26,10 +26,14 @@ class AppController extends ChangeNotifier {
 
   static const int finishDurationSeconds = 3;
 
+  /// Quy trình mới: Đã tắt quét mã QR mặc định (vẫn giữ code để kích hoạt khi cần)
+  bool enableQrScanning;
+
   AppController({
     SoundService? soundService,
     QuanService? quanService,
     NfcService? nfcService,
+    this.enableQrScanning = false,
   })  : _soundService = soundService ?? SoundService(),
         _quanService = quanService ?? QuanService(),
         _nfcService = nfcService ?? NfcService();
@@ -59,6 +63,7 @@ class AppController extends ChangeNotifier {
   String? get currentScannedNfcCode => _currentScannedNfcCode;
 
   void clearUnregisteredCard() {
+    if (_unregisteredCard == null && _currentScannedNfcCode == null) return;
     _unregisteredCard = null;
     _currentScannedNfcCode = null;
     notifyListeners();
@@ -68,9 +73,11 @@ class AppController extends ChangeNotifier {
   Future<void> checkNfcStatus() async {
     final status = await _nfcService.checkSupportStatus();
     if (_isDisposed) return;
-    _nfcStatus = status;
-    debugPrint('[NFC] Trạng thái NFC thiết bị: $_nfcStatus');
-    notifyListeners();
+    if (_nfcStatus != status) {
+      _nfcStatus = status;
+      debugPrint('[NFC] Trạng thái NFC thiết bị: $_nfcStatus');
+      notifyListeners();
+    }
   }
 
   /// Khởi động phiên quét ngầm RFID/NFC
@@ -257,12 +264,17 @@ class AppController extends ChangeNotifier {
     _isFinishSuccess = true;
     _unregisteredCard = null; // Reset tab quẹt thẻ về trạng thái sạch ban đầu
     _currentScannedNfcCode = null;
-    checkNfcStatus();
     notifyListeners();
   }
 
   /// Xử lý sự kiện khi Camera phát hiện mã QR
   Future<bool> onQrDetected(String? rawValue) async {
+    // 0. Quy trình mới: Không quét mã QR nữa
+    if (!enableQrScanning) {
+      debugPrint('[QR Scan] Quét QR đang tắt theo cấu hình quy trình mới.');
+      return false;
+    }
+
     // 1. Chống duplicate: Nếu đang xử lý hoặc không ở chế độ STANDBY -> Bỏ qua
     if (_isProcessingQr || _mode != AppMode.standby) {
       return false;

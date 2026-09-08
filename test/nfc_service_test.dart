@@ -8,6 +8,7 @@ import 'package:nfc_manager/nfc_manager.dart';
 
 class MockSoundService extends SoundService {
   int beepCount = 0;
+  int vibrateCount = 0;
 
   @override
   Future<void> init() async {}
@@ -15,6 +16,11 @@ class MockSoundService extends SoundService {
   @override
   Future<void> playSuccessBeep() async {
     beepCount++;
+  }
+
+  @override
+  Future<void> vibrateOnly() async {
+    vibrateCount++;
   }
 
   @override
@@ -108,7 +114,7 @@ void main() {
       controller.dispose();
     });
 
-    test('Quét thẻ NFC phát tiếng bíp và GIỮ NGUYÊN trạng thái STANDBY (không chuyển WORKING)', () async {
+    test('Quét thẻ NFC chưa đăng ký thì rung haptic và GIỮ NGUYÊN trạng thái STANDBY', () async {
       controller.setReady();
       expect(controller.mode, equals(AppMode.standby));
 
@@ -121,15 +127,15 @@ void main() {
 
       await controller.onNfcCardDetected(cardInfo);
 
-      // 1. Phải phát tiếng BÍP
-      expect(mockSoundService.beepCount, equals(1));
+      // 1. Phải rung haptic
+      expect(mockSoundService.vibrateCount, equals(1));
 
       // 2. Không được chuyển sang working screen
       expect(controller.mode, equals(AppMode.standby));
       expect(controller.currentUrl, isNull);
       expect(controller.isProcessingQr, isFalse);
 
-      // Quét thẻ tiếp theo vẫn kêu bíp và giữ nguyên standby
+      // Quét thẻ tiếp theo vẫn rung và giữ nguyên standby
       final cardInfo2 = NfcCardInfo(
         uidHex: '11:22:33:44',
         uidRawHex: '11223344',
@@ -138,7 +144,7 @@ void main() {
       );
 
       await controller.onNfcCardDetected(cardInfo2);
-      expect(mockSoundService.beepCount, equals(2));
+      expect(mockSoundService.vibrateCount, equals(2));
       expect(controller.mode, equals(AppMode.standby));
     });
   });
