@@ -93,7 +93,7 @@ class _SplashScreenState extends State<SplashScreen> {
       });
 
       // Delay 1s và chuyển sang STANDBY
-      await Future.delayed(const Duration(seconds: 100));
+      await Future.delayed(const Duration(seconds: 1));
       if (mounted) {
         widget.controller.setReady(
           maQuan: savedMaQuan,
@@ -476,11 +476,11 @@ class _SplashScreenState extends State<SplashScreen> {
               children: [
                 const Spacer(),
 
-                // App Artwork (Mì Sài Gòn 0vnđ)
+                // App Artwork (Mì Sài Gòn 0vnđ) với transparent background
                 ConstrainedBox(
                   constraints: const BoxConstraints(
-                    maxWidth: 180,
-                    maxHeight: 180,
+                    maxWidth: 260,
+                    maxHeight: 260,
                   ),
                   child: Image.asset(
                     'assets/images/app_icon.png',
@@ -495,7 +495,22 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: 15),
+
+                // Logo Quỹ Từ Thiện Bông Sen
+                ConstrainedBox(
+                  constraints: const BoxConstraints(
+                    maxWidth: 450,
+                    maxHeight: 240,
+                  ),
+                  child: Image.asset(
+                    'assets/images/logo_qbs.png',
+                    fit: BoxFit.contain,
+                    errorBuilder: (context, error, stackTrace) => const SizedBox(height: 40),
+                  ),
+                ),
+
+                const SizedBox(height: 15),
 
                 // Tiêu đề chương trình
                 const Text(
@@ -523,20 +538,6 @@ class _SplashScreenState extends State<SplashScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 24),
-
-                // Logo Quỹ Từ Thiện Bông Sen
-                ConstrainedBox(
-                  constraints: const BoxConstraints(
-                    maxWidth: 240,
-                    maxHeight: 75,
-                  ),
-                  child: Image.asset(
-                    'assets/images/logo_qbs.png',
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) => const SizedBox(height: 40),
-                  ),
-                ),
 
                 const Spacer(),
 

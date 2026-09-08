@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:micharity/app.dart';
 import 'package:micharity/controllers/app_controller.dart';
+import 'package:micharity/screens/standby_screen.dart';
 import 'package:micharity/services/sound_service.dart';
 
 class MockSoundService extends SoundService {
@@ -25,7 +26,7 @@ void main() {
     expect(find.text('CHƯƠNG TRÌNH TỪ THIỆN'), findsOneWidget);
     expect(find.text('Mì Sài gòn 0đ'), findsOneWidget);
     expect(find.textContaining('34D Yersin'), findsOneWidget);
-    expect(find.byIcon(Icons.settings_outlined), findsOneWidget);
+    expect(find.byType(ThinGearIcon), findsOneWidget);
   });
 }
 

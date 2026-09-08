@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../controllers/app_controller.dart';
@@ -227,9 +228,8 @@ class _StandbyScreenState extends State<StandbyScreen>
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // 1. KHU VỰC PHÍA TRÊN: Khe thẻ đỏ mép trái, 2 mũi tên vàng, logo Mì Sài Gòn 0vnđ
+                // 1. KHU VỰC PHÍA TRÊN: Chiếm toàn bộ không gian còn lại ở trên
                 Expanded(
-                  flex: 5,
                   child: Padding(
                     padding: const EdgeInsets.only(top: 10, bottom: 10, right: 16),
                     child: Stack(
@@ -249,7 +249,7 @@ class _StandbyScreenState extends State<StandbyScreen>
                             },
                             child: Container(
                               width: 32,
-                              height: 220,
+                              height: 350,
                               decoration: BoxDecoration(
                                 color: const Color(0xFFE50000),
                                 borderRadius: const BorderRadius.only(
@@ -292,9 +292,9 @@ class _StandbyScreenState extends State<StandbyScreen>
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: const [
-                                    LeftBlockArrow(width: 54, height: 60),
+                                    LeftBlockArrow(width: 54, height: 100),
                                     SizedBox(height: 32),
-                                    LeftBlockArrow(width: 54, height: 60),
+                                    LeftBlockArrow(width: 54, height: 100),
                                   ],
                                 ),
                               ),
@@ -306,8 +306,8 @@ class _StandbyScreenState extends State<StandbyScreen>
                                 child: Center(
                                   child: ConstrainedBox(
                                     constraints: const BoxConstraints(
-                                      maxWidth: 220,
-                                      maxHeight: 220,
+                                      maxWidth: 320,
+                                      maxHeight: 320,
                                     ),
                                     child: Image.asset(
                                       'assets/images/app_icon.png',
@@ -329,10 +329,10 @@ class _StandbyScreenState extends State<StandbyScreen>
                   ),
                 ),
 
-                // 2. KHU VỰC Ở GIỮA: Dải băng màu xanh lam "CHO THẺ VÔ KHE"
+                // 2. KHU VỰC Ở GIỮA: Ngay sát phía trên khu vực phía dưới
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 18),
                   color: const Color(0xFF00A4E8),
                   child: Center(
                     child: AnimatedBuilder(
@@ -349,7 +349,7 @@ class _StandbyScreenState extends State<StandbyScreen>
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 26,
+                          fontSize: 32,
                           fontWeight: FontWeight.w900,
                           letterSpacing: 2.0,
                         ),
@@ -358,76 +358,71 @@ class _StandbyScreenState extends State<StandbyScreen>
                   ),
                 ),
 
-                // 3. KHU VỰC PHÍA DƯỚI: Logo Quỹ Từ Thiện Bông Sen, Chương trình, Tên quán
-                Expanded(
-                  flex: 6,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        const Spacer(flex: 1),
-
-                        // Logo Quỹ Từ Thiện Bông Sen
-                        ConstrainedBox(
-                          constraints: const BoxConstraints(
-                            maxWidth: 320,
-                            maxHeight: 110,
-                          ),
-                          child: Image.asset(
-                            'assets/images/logo_qbs.png',
-                            fit: BoxFit.contain,
-                            errorBuilder: (context, error, stackTrace) => const SizedBox(height: 80),
-                          ),
+                // 3. KHU VỰC PHÍA DƯỚI: Sát phía cạnh dưới
+                Padding(
+                  padding: const EdgeInsets.only(top: 14, bottom: 10, left: 5, right: 5),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      // Logo Quỹ Từ Thiện Bông Sen
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(
+                          maxWidth: 450,
+                          maxHeight: 240,
                         ),
-
-                        const Spacer(flex: 1),
-
-                        // Tiêu đề chương trình
-                        const Text(
-                          'CHƯƠNG TRÌNH TỪ THIỆN',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Color(0xFF00A4E8),
-                            fontSize: 19,
-                            fontWeight: FontWeight.bold,
-                            letterSpacing: 1.5,
-                          ),
+                        child: Image.asset(
+                          'assets/images/logo_qbs.png',
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) => const SizedBox(height: 60),
                         ),
+                      ),
 
-                        const SizedBox(height: 6),
+                      const SizedBox(height: 4),
 
-                        // Mì Sài gòn 0đ
-                        const Text(
-                          'Mì Sài gòn 0đ',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Color(0xFF00A4E8),
-                            fontSize: 34,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 0.5,
-                          ),
+                      // Tiêu đề chương trình
+                      const Text(
+                        'CHƯƠNG TRÌNH TỪ THIỆN',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0xFF00A4E8),
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 1.5,
                         ),
+                      ),
 
-                        const Spacer(flex: 2),
+                      const SizedBox(height: 4),
 
-                        // Hàng dưới cùng là "ten_quan" đã setup ở splash screen
-                        Text(
-                          _formatTenQuan(widget.controller.currentTenQuan),
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Color(0xFF00A4E8),
-                            fontSize: 13.5,
-                            fontWeight: FontWeight.w600,
-                          ),
+                      // Mì Sài gòn 0đ
+                      const Text(
+                        'Mì Sài gòn 0đ',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          color: Color(0xFF00A4E8),
+                          fontSize: 32,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.5,
                         ),
+                      ),
 
-                        const SizedBox(height: 4),
-                      ],
-                    ),
+                      const SizedBox(height: 4),
+
+                      // Hàng dưới cùng là "ten_quan" đã setup ở splash screen
+                      Text(
+                        _formatTenQuan(widget.controller.currentTenQuan),
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: Color(0xFF00A4E8),
+                          fontSize: 13.5,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+
+                      const SizedBox(height: 12),
+                    ],
                   ),
                 ),
               ],
@@ -435,13 +430,13 @@ class _StandbyScreenState extends State<StandbyScreen>
 
             // Icon bánh răng ở góc trên bên phải để mở trực tiếp popup "Định danh cho Quán"
             Positioned(
-              top: 8,
-              right: 12,
+              top: 10,
+              right: 14,
               child: IconButton(
-                icon: const Icon(
-                  Icons.settings_outlined,
+                icon: const ThinGearIcon(
+                  size: 45,
                   color: Color(0xFF00A4E8),
-                  size: 36,
+                  strokeWidth: 1.8,
                 ),
                 tooltip: 'Định danh cho Quán',
                 onPressed: () {
@@ -815,4 +810,88 @@ class _LeftBlockArrowPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// Widget vẽ icon bánh răng thanh mảnh, sắc nét theo đúng hình mockup
+class ThinGearIcon extends StatelessWidget {
+  final double size;
+  final Color color;
+  final double strokeWidth;
+
+  const ThinGearIcon({
+    super.key,
+    this.size = 38,
+    this.color = const Color(0xFF00A4E8),
+    this.strokeWidth = 1.8,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size(size, size),
+      painter: _ThinGearPainter(
+        color: color,
+        strokeWidth: strokeWidth,
+      ),
+    );
+  }
+}
+
+class _ThinGearPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+
+  _ThinGearPainter({
+    required this.color,
+    required this.strokeWidth,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cx = size.width / 2;
+    final cy = size.height / 2;
+    final rOuter = size.width * 0.44;
+    final rRoot = size.width * 0.35;
+    final rInner = size.width * 0.16;
+
+    const nTeeth = 8;
+    final points = <Offset>[];
+
+    for (var i = 0; i < nTeeth; i++) {
+      final baseAng = i * (2 * math.pi / nTeeth);
+      final a1 = baseAng - 0.12;
+      final a2 = baseAng + 0.12;
+      final a3 = baseAng + math.pi / nTeeth - 0.15;
+      final a4 = baseAng + math.pi / nTeeth + 0.15;
+
+      points.add(Offset(cx + rOuter * math.cos(a1), cy + rOuter * math.sin(a1)));
+      points.add(Offset(cx + rOuter * math.cos(a2), cy + rOuter * math.sin(a2)));
+      points.add(Offset(cx + rRoot * math.cos(a3), cy + rRoot * math.sin(a3)));
+      points.add(Offset(cx + rRoot * math.cos(a4), cy + rRoot * math.sin(a4)));
+    }
+
+    final path = Path();
+    if (points.isNotEmpty) {
+      path.moveTo(points[0].dx, points[0].dy);
+      for (var i = 1; i < points.length; i++) {
+        path.lineTo(points[i].dx, points[i].dy);
+      }
+      path.close();
+    }
+
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+
+    canvas.drawPath(path, paint);
+    canvas.drawCircle(Offset(cx, cy), rInner, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ThinGearPainter oldDelegate) {
+    return oldDelegate.color != color || oldDelegate.strokeWidth != strokeWidth;
+  }
 }
