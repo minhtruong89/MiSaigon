@@ -141,6 +141,31 @@ class QuanService {
     return prefs.getString(keyPassword);
   }
 
+  /// Lấy mật khẩu quán hiện tại (từ SharedPreferences hoặc tra cứu theo ma_quan)
+  Future<String?> getQuanPassword() async {
+    final storedPass = await getStoredPassword();
+    if (storedPass != null && storedPass.trim().isNotEmpty) {
+      return storedPass.trim();
+    }
+    final maQuan = await getStoredMaQuan();
+    if (maQuan != null && maQuan.trim().isNotEmpty) {
+      final info = await getCachedQuanInfo() ?? await fetchQuanInfo();
+      final locations = info?['locations'] as List<dynamic>?;
+      if (locations != null) {
+        for (final loc in locations) {
+          if (loc is Map<String, dynamic>) {
+            final locMa =
+                (loc['ma_quan'] ?? '').toString().trim().toUpperCase();
+            if (locMa == maQuan.trim().toUpperCase()) {
+              return loc['password']?.toString().trim();
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
   /// Lấy tên quán đã lưu
   Future<String?> getStoredTenQuan() async {
     final prefs = await SharedPreferences.getInstance();
