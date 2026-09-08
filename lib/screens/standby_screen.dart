@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../controllers/app_controller.dart';
 import '../models/app_mode.dart';
+import '../services/nfc_service.dart';
 import '../widgets/thin_gear_icon.dart';
 export '../widgets/thin_gear_icon.dart';
 
@@ -23,6 +24,9 @@ class StandbyScreen extends StatefulWidget {
 class _StandbyScreenState extends State<StandbyScreen>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   bool _isDialogOpen = false;
+  bool _isNfcDialogOpen = false;
+  bool _hasPromptedNfc = false;
+  Timer? _nfcStatusPollingTimer;
   final TextEditingController _nfcTextController = TextEditingController();
   Timer? _nfcDebounceTimer;
 
@@ -45,10 +49,31 @@ class _StandbyScreenState extends State<StandbyScreen>
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _initNfcAndScan();
     });
+
+    // Polling kiểm tra trạng thái NFC mỗi 3 giây nếu NFC bị tắt trong lúc app đang chạy
+    _nfcStatusPollingTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (mounted &&
+          widget.controller.mode == AppMode.standby &&
+          !_isDialogOpen &&
+          !_isNfcDialogOpen) {
+        widget.controller.checkNfcStatus();
+      }
+    });
   }
 
   void _onControllerChanged() {
     if (!mounted) return;
+
+    // Reset cờ khi NFC được bật lại để có thể nhắc tiếp nếu sau này người dùng lại tắt NFC
+    if (widget.controller.isNfcEnabled) {
+      _hasPromptedNfc = false;
+    } else if (widget.controller.nfcStatus == NfcSupportStatus.disabled &&
+        !_hasPromptedNfc &&
+        !_isDialogOpen &&
+        !_isNfcDialogOpen) {
+      _hasPromptedNfc = true;
+      _showNfcEnableDialog();
+    }
 
     final lastCard = widget.controller.lastDetectedCard;
     if (lastCard != null) {
@@ -164,6 +189,15 @@ class _StandbyScreenState extends State<StandbyScreen>
   Future<void> _initNfcAndScan() async {
     await widget.controller.checkNfcStatus();
     if (!mounted) return;
+
+    if (widget.controller.nfcStatus == NfcSupportStatus.disabled &&
+        !_hasPromptedNfc &&
+        !_isDialogOpen &&
+        !_isNfcDialogOpen) {
+      _hasPromptedNfc = true;
+      _showNfcEnableDialog();
+    }
+
     _syncNfcScanning();
   }
 
@@ -187,6 +221,15 @@ class _StandbyScreenState extends State<StandbyScreen>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
       widget.controller.checkNfcStatus().then((_) {
+        if (!mounted) return;
+        if (widget.controller.nfcStatus == NfcSupportStatus.disabled &&
+            !_isDialogOpen &&
+            !_isNfcDialogOpen) {
+          _hasPromptedNfc = true;
+          _showNfcEnableDialog();
+        } else if (widget.controller.isNfcEnabled) {
+          _hasPromptedNfc = false;
+        }
         _syncNfcScanning();
       });
     } else if (state == AppLifecycleState.paused ||
@@ -199,6 +242,7 @@ class _StandbyScreenState extends State<StandbyScreen>
 
   @override
   void dispose() {
+    _nfcStatusPollingTimer?.cancel();
     _blinkController.dispose();
     HardwareKeyboard.instance.removeHandler(_handleGlobalHardwareKey);
     _nfcDebounceTimer?.cancel();
@@ -207,6 +251,71 @@ class _StandbyScreenState extends State<StandbyScreen>
     widget.controller.removeListener(_onControllerChanged);
     widget.controller.stopNfcScanning();
     super.dispose();
+  }
+
+  /// Hộp thoại nhắc nhở bật NFC nếu máy hỗ trợ nhưng đang tắt
+  Future<void> _showNfcEnableDialog() async {
+    if (!mounted || _isNfcDialogOpen || _isDialogOpen) return;
+    _isNfcDialogOpen = true;
+
+    try {
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          title: const Row(
+            children: [
+              Icon(Icons.nfc_rounded, color: Color(0xFF00A4E8), size: 28),
+              SizedBox(width: 12),
+              Text(
+                'Kích hoạt NFC',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+            ],
+          ),
+          content: const Text(
+            'Thiết bị hỗ trợ quét thẻ NFC/RFID nhưng tính năng NFC đang TẮT trong cài đặt máy.\n\nBạn có muốn mở Cài đặt để bật NFC ngay bây giờ?',
+            style: TextStyle(fontSize: 15, height: 1.45, color: Color(0xFF334155)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: const Text(
+                'Để sau',
+                style: TextStyle(color: Color(0xFF64748B), fontSize: 16),
+              ),
+            ),
+            ElevatedButton.icon(
+              onPressed: () {
+                Navigator.pop(ctx);
+                widget.controller.nfcService.openNfcSettings();
+              },
+              icon: const Icon(Icons.settings, size: 20),
+              label: const Text(
+                'Mở Cài đặt NFC',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF00A4E8),
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    } finally {
+      _isNfcDialogOpen = false;
+    }
   }
 
   String _formatTenQuan(String? tenQuan) {
@@ -332,28 +441,35 @@ class _StandbyScreenState extends State<StandbyScreen>
                 ),
 
                 // 2. KHU VỰC Ở GIỮA: Ngay sát phía trên khu vực phía dưới
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  color: const Color(0xFF00A4E8),
-                  child: Center(
-                    child: AnimatedBuilder(
-                      animation: _blinkController,
-                      builder: (context, child) {
-                        final isVisible = _blinkController.value < 0.8;
-                        return Opacity(
-                          opacity: isVisible ? 1.0 : 0.0,
-                          child: child,
-                        );
-                      },
-                      child: const Text(
-                        'CHO THẺ VÔ KHE',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 32,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 2.0,
+                GestureDetector(
+                  onTap: () {
+                    if (widget.controller.nfcStatus == NfcSupportStatus.disabled) {
+                      _showNfcEnableDialog();
+                    }
+                  },
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 18),
+                    color: const Color(0xFF00A4E8),
+                    child: Center(
+                      child: AnimatedBuilder(
+                        animation: _blinkController,
+                        builder: (context, child) {
+                          final isVisible = _blinkController.value < 0.8;
+                          return Opacity(
+                            opacity: isVisible ? 1.0 : 0.0,
+                            child: child,
+                          );
+                        },
+                        child: const Text(
+                          'CHO THẺ VÔ KHE',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 32,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: 2.0,
+                          ),
                         ),
                       ),
                     ),
