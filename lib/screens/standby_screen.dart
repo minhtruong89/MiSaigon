@@ -418,7 +418,7 @@ class _StandbyScreenState extends State<StandbyScreen>
                                   child: ConstrainedBox(
                                     constraints: const BoxConstraints(
                                       maxWidth: 420,
-                                      maxHeight: 380,
+                                      maxHeight: 240,
                                     ),
                                     child: Transform.scale(
                                       scaleX: 1.24,
@@ -465,14 +465,36 @@ class _StandbyScreenState extends State<StandbyScreen>
                             child: child,
                           );
                         },
-                        child: const Text(
-                          'CHO THẺ VÔ KHE',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 32,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 2.0,
+                        child: const Padding(
+                          padding: EdgeInsets.symmetric(horizontal: 16),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  'CHO THẺ VÔ KHE',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 2.0,
+                                  ),
+                                ),
+                                SizedBox(height: 6),
+                                Text(
+                                  'XÁC NHẬN ĂN 1 SUẤT',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.5,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       ),
