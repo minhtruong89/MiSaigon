@@ -22,6 +22,7 @@ import android.os.Bundle;
 import android.os.VibrationEffect;
 import android.os.Vibrator;
 import android.provider.Settings;
+import android.view.WindowManager;
 import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 import java.io.File;
@@ -43,6 +44,12 @@ public class MainActivity extends FlutterActivity {
     private MethodChannel nfcChannel;
     private NfcAdapter nfcAdapter;
     private boolean isNfcScanning = false;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
+    }
 
     @Override
     public void configureFlutterEngine(@NonNull FlutterEngine flutterEngine) {
@@ -264,6 +271,7 @@ public class MainActivity extends FlutterActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         logToFlutter("MainActivity onResume (isNfcScanning=" + isNfcScanning + ")");
         if (isNfcScanning) {
             enableNfcScanning();

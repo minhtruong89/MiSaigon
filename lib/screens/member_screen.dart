@@ -328,14 +328,6 @@ class _MemberScreenState extends State<MemberScreen>
     _showMealHistoryDialog(context);
   }
 
-  void _onGoToHome() {
-    _idleTimeoutTimer?.cancel();
-    _countdownTimer?.cancel();
-    _rateLimitTimer?.cancel();
-    _successTimer?.cancel();
-    widget.controller.goToStandby();
-  }
-
   /// Popup hiển thị lịch sử các suất ăn của thành viên
   Future<void> _showMealHistoryDialog(BuildContext context) async {
     _idleTimeoutTimer?.cancel();
@@ -666,40 +658,6 @@ class _MemberScreenState extends State<MemberScreen>
               ),
             ),
 
-            const SizedBox(height: 20),
-
-            // Nút: "VỀ TRANG CHỦ"
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 22),
-              child: SizedBox(
-                width: double.infinity,
-                height: 90,
-                child: OutlinedButton(
-                  onPressed: _onGoToHome,
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: const Color(0xFF475569),
-                    backgroundColor: Colors.white,
-                    side: const BorderSide(
-                      color: Color(0xFF64748B),
-                      width: 2.4,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                  ),
-                  child: const Text(
-                    'VỀ TRANG CHỦ',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-
             const SizedBox(height: 30),
           ],
         ),
@@ -1016,40 +974,6 @@ class _MemberScreenState extends State<MemberScreen>
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 0.5,
-                  ),
-                ),
-              ),
-            ),
-          ),
-
-          const SizedBox(height: 20),
-
-          // Nút: "VỀ TRANG CHỦ"
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 22),
-            child: SizedBox(
-              width: double.infinity,
-              height: 90,
-              child: OutlinedButton(
-                onPressed: _onGoToHome,
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: const Color(0xFF475569),
-                  backgroundColor: Colors.white,
-                  side: const BorderSide(
-                    color: Color(0xFF64748B),
-                    width: 2.4,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: const Text(
-                  'VỀ TRANG CHỦ',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    fontSize: 28,
                     fontWeight: FontWeight.bold,
                     letterSpacing: 0.5,
                   ),
