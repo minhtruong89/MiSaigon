@@ -385,7 +385,7 @@ class _StandbyScreenState extends State<StandbyScreen>
 
                         // Cụm 2 mũi tên vàng trỏ trái & Logo Mì Sài Gòn 0vnđ
                         Padding(
-                          padding: const EdgeInsets.only(left: 44),
+                          padding: const EdgeInsets.only(left: 38),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.center,
@@ -403,30 +403,34 @@ class _StandbyScreenState extends State<StandbyScreen>
                                 child: Column(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: const [
-                                    LeftBlockArrow(width: 54, height: 100),
+                                    LeftBlockArrow(width: 48, height: 95),
                                     SizedBox(height: 32),
-                                    LeftBlockArrow(width: 54, height: 100),
+                                    LeftBlockArrow(width: 48, height: 95),
                                   ],
                                 ),
                               ),
 
-                              const SizedBox(width: 14),
+                              const SizedBox(width: 8),
 
                               // Logo Mì Sài Gòn 0vnđ
                               Expanded(
                                 child: Center(
                                   child: ConstrainedBox(
                                     constraints: const BoxConstraints(
-                                      maxWidth: 320,
-                                      maxHeight: 320,
+                                      maxWidth: 420,
+                                      maxHeight: 380,
                                     ),
-                                    child: Image.asset(
-                                      'assets/images/app_icon.png',
-                                      fit: BoxFit.contain,
-                                      errorBuilder: (context, error, stackTrace) => const Icon(
-                                        Icons.restaurant_rounded,
-                                        size: 80,
-                                        color: Color(0xFF00A4E8),
+                                    child: Transform.scale(
+                                      scaleX: 1.24,
+                                      scaleY: 1.0,
+                                      child: Image.asset(
+                                        'assets/images/app_icon.png',
+                                        fit: BoxFit.contain,
+                                        errorBuilder: (context, error, stackTrace) => const Icon(
+                                          Icons.restaurant_rounded,
+                                          size: 80,
+                                          color: Color(0xFF00A4E8),
+                                        ),
                                       ),
                                     ),
                                   ),

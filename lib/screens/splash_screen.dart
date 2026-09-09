@@ -482,16 +482,18 @@ class _SplashScreenState extends State<SplashScreen> {
                     maxWidth: 260,
                     maxHeight: 260,
                   ),
-                  child: Image.asset(
-                    'assets/images/app_icon.png',
-                    fit: BoxFit.contain,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Icon(
+                  child: Transform.scale(
+                    scaleX: 1.24,
+                    scaleY: 1.0,
+                    child: Image.asset(
+                      'assets/images/app_icon.png',
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, error, stackTrace) => const Icon(
                         Icons.restaurant_rounded,
                         size: 80,
                         color: Color(0xFF00A4E8),
-                      );
-                    },
+                      ),
+                    ),
                   ),
                 ),
 
