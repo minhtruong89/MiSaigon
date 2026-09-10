@@ -1,0 +1,15 @@
+Mã quán(không dấu, viết liền)	Tên quán + Địa chỉ	Password
+		
+SG34DY	 34D Yersin, P. Nguyễn Thái Bình TPHCM	ys
+SG24VH	24 Vĩnh Hội, P. Vĩnh Hội, TP.HCM	vh
+NT73DT	73 Đặng Tất, Nha Trang	dt
+NT52HTT	52 Hai Tháng Tư, Nha Trang	htt
+GL91DTH	91 Đinh Tiên Hoàng, Gia Lai	dth
+GL85PDG	85 Phan Đình Giót, Gia Lai	pdg
+GL00NVX	Bờ kè Nguyễn Viết Xuân, Gia Lai	nvx
+TVTNNC4	Tác viên Tuyền Nguyễn - NC4	tnnc4
+TVHDNT	Tác viên Hương Đặng - QYV Nha Trang	hdnt
+TVBTNT	Tác viên Bảo Trâm - QYV Nha Trang	btnt
+TVNHGL	Tác viên Ngọc Hân - Gia Lai	nhgl
+TVMNGL	Tác viên Minh Ngọc - Gia Lai	mngl
+SG324PTH	324 Phạm Thế Hiển, TPHCM	pth
