@@ -1,0 +1,8 @@
+Mã khách	Họ và tên	Số Điện Thoại	Bữa/tháng được cấp	Link QR(tự sinh)	MÃ NFC
+kh_0001	Lê Văn An	905516609	2	https://dtri2206.github.io/freemeals-website/quet.html?kh=kh_0001	
+kh_0002	Nguyễn Đức Trí	903614313	10000	https://dtri2206.github.io/freemeals-website/quet.html?kh=kh_0002	
+kh_0003	Nguyễn Thị Lệ	905516609	2	https://dtri2206.github.io/freemeals-website/quet.html?kh=kh_0003	
+nt_0004	Đoàn Văn Xuân (test)	905502109	30	https://dtri2206.github.io/freemeals-website/quet.html?kh=nt_0004	
+gl_0005	Trần Thị Minh (test)	907679207	20	https://dtri2206.github.io/freemeals-website/quet.html?kh=gl_0005	a0:a9:f8:cf
+nc4_0006	Nguyễn Văn Hải (test)	973112209	80	https://dtri2206.github.io/freemeals-website/quet.html?kh=nc4_0006	63:09:79:11
+kh_0005	Nguyễn Văn Tài	973112209	80	https://dtri2206.github.io/freemeals-website/quet.html?kh=kh_0005	93:d2:e1:11
