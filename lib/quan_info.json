@@ -1,7 +1,7 @@
 {
   "app_config": {
     "config_version": "1.0.0",
-    "update_url": "http://data.soncamedia.com/firmware/smartbox/miTuThien/MiTuThien_1.0.0.apk",
+    "update_url": "http://data.soncamedia.com/firmware/smartbox/miTuThien/MiTuThien_1.0.1.apk",
 	"bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxZ2pucWVxd3Npam5zcGhwenF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5MjUzNTEsImV4cCI6MjEwMzUwMTM1MX0.eJpR_qUIGLfZHylI5yoIngAtUr0qYpKLpHH9oKPIhZ4"
   },
   "locations": [

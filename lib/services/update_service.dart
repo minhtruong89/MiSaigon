@@ -129,4 +129,18 @@ class UpdateService {
       return false;
     }
   }
+
+  /// Mở màn hình Cài đặt Ứng dụng Trang chủ (Home App / Launcher) trên Android
+  Future<bool> openHomeSettings() async {
+    if (!Platform.isAndroid) return false;
+
+    try {
+      final result =
+          await _installerChannel.invokeMethod<bool>('openHomeSettings');
+      return result ?? false;
+    } catch (e) {
+      developer.log('Lỗi mở Cài đặt Trang chủ: $e', name: 'UpdateService');
+      return false;
+    }
+  }
 }

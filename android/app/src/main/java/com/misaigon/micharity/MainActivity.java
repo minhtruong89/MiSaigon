@@ -96,6 +96,27 @@ public class MainActivity extends FlutterActivity {
                         } else {
                             result.error("INVALID_PATH", "File path is null", null);
                         }
+                    } else if (call.method.equals("openHomeSettings")) {
+                        try {
+                            Intent intent;
+                            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                                intent = new Intent(Settings.ACTION_HOME_SETTINGS);
+                            } else {
+                                intent = new Intent(Settings.ACTION_SETTINGS);
+                            }
+                            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                            startActivity(intent);
+                            result.success(true);
+                        } catch (Exception e) {
+                            try {
+                                Intent intent = new Intent(Settings.ACTION_SETTINGS);
+                                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                                startActivity(intent);
+                                result.success(true);
+                            } catch (Exception ex) {
+                                result.error("SETTINGS_ERROR", ex.getMessage(), null);
+                            }
+                        }
                     } else {
                         result.notImplemented();
                     }
