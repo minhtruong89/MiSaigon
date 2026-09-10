@@ -5,7 +5,6 @@ import '../models/app_mode.dart';
 import '../models/member_info.dart';
 import '../services/member_api_service.dart';
 import '../services/nfc_service.dart';
-import '../services/qr_service.dart';
 import '../services/quan_service.dart';
 import '../services/sound_service.dart';
 
@@ -19,7 +18,7 @@ class AppController extends ChangeNotifier {
   AppMode _mode = AppMode.splash;
   String? _currentUrl;
   String? _currentMaKhach;
-  bool _isProcessingQr = false;
+  bool _isProcessingCard = false;
   Timer? _finishTimer;
 
   String? _currentMaQuan;
@@ -30,9 +29,6 @@ class AppController extends ChangeNotifier {
 
   static const int finishDurationSeconds = 3;
 
-  /// Quy trình mới: Đã tắt quét mã QR mặc định (vẫn giữ code để kích hoạt khi cần)
-  bool enableQrScanning;
-
   /// Đổi cơ chế qua App xử lý giao diện thay vì mở Webview (vẫn giữ code Web khi cần)
   bool useNativeMemberScreen;
 
@@ -41,7 +37,6 @@ class AppController extends ChangeNotifier {
     QuanService? quanService,
     NfcService? nfcService,
     MemberApiService? memberApiService,
-    this.enableQrScanning = false,
     this.useNativeMemberScreen = true,
   })  : _soundService = soundService ?? SoundService(),
         _quanService = quanService ?? QuanService(),
@@ -52,7 +47,8 @@ class AppController extends ChangeNotifier {
   AppMode get mode => _mode;
   String? get currentUrl => _currentUrl;
   String? get currentMaKhach => _currentMaKhach;
-  bool get isProcessingQr => _isProcessingQr;
+  bool get isProcessingCard => _isProcessingCard;
+  bool get isProcessingQr => _isProcessingCard;
   SoundService get soundService => _soundService;
   QuanService get quanService => _quanService;
   NfcService get nfcService => _nfcService;
@@ -131,12 +127,12 @@ class AppController extends ChangeNotifier {
   /// Xử lý khi phát hiện thẻ RFID/NFC
   Future<void> onNfcCardDetected(NfcCardInfo cardInfo) async {
     // 1. Chống duplicate: Nếu đang xử lý hoặc không ở chế độ STANDBY -> Bỏ qua
-    if (_isProcessingQr || _mode != AppMode.standby) {
+    if (_isProcessingCard || _mode != AppMode.standby) {
       return;
     }
 
     // Khóa xử lý ngay lập tức để chặn các sự kiện NFC phát tiếp theo khi thẻ vẫn còn áp lưng máy
-    _isProcessingQr = true;
+    _isProcessingCard = true;
     _currentScannedNfcCode = cardInfo.uidHex;
 
     debugPrint('========================================');
@@ -195,7 +191,7 @@ class AppController extends ChangeNotifier {
         _isFinishSuccess = true;
         _unregisteredCard = null;
 
-        // 3. Phát đúng 1 tiếng BÍP thành công giống như lúc quét mã QR
+        // 3. Phát đúng 1 tiếng BÍP thành công
         debugPrint('[NFC/RFID] Phát tiếng BÍP thành công!');
         await _soundService.playSuccessBeep();
 
@@ -210,7 +206,7 @@ class AppController extends ChangeNotifier {
     }
 
     // Nếu thẻ không có trong danh sách thành viên:
-    _isProcessingQr = false; // Mở lại khóa để cho phép quẹt thẻ khác
+    _isProcessingCard = false; // Mở lại khóa để cho phép quẹt thẻ khác
     debugPrint('[NFC/RFID] Thẻ UID Hex: ${cardInfo.uidHex}, Dec: ${cardInfo.uidDec} chưa được đăng ký trong danh sách members.');
     _unregisteredCard = cardInfo;
     notifyListeners();
@@ -223,11 +219,12 @@ class AppController extends ChangeNotifier {
     if (clean.isEmpty) return false;
 
     // Nếu đang trong tiến trình xử lý hoặc không ở STANDBY -> bỏ qua
-    if (_isProcessingQr || _mode != AppMode.standby) {
+    // Nếu đang trong tiến trình xử lý hoặc không ở STANDBY -> bỏ qua
+    if (_isProcessingCard || _mode != AppMode.standby) {
       return false;
     }
 
-    _isProcessingQr = true;
+    _isProcessingCard = true;
     _currentScannedNfcCode = clean;
 
     debugPrint('========================================');
@@ -298,7 +295,7 @@ class AppController extends ChangeNotifier {
     }
 
     // Không tìm thấy member:
-    _isProcessingQr = false;
+    _isProcessingCard = false;
     debugPrint('[NFC/RFID Reader] Mã "$clean" chưa được đăng ký trong danh sách members.');
 
     // Tạo NfcCardInfo để giao diện hiển thị cảnh báo
@@ -319,58 +316,12 @@ class AppController extends ChangeNotifier {
     if (maQuan != null) _currentMaQuan = maQuan;
     if (tenQuan != null) _currentTenQuan = tenQuan;
     _mode = AppMode.standby;
-    _isProcessingQr = false;
+    _isProcessingCard = false;
     _currentUrl = null;
     _isFinishSuccess = true;
     _unregisteredCard = null; // Reset tab quẹt thẻ về trạng thái sạch ban đầu
     _currentScannedNfcCode = null;
     notifyListeners();
-  }
-
-  /// Xử lý sự kiện khi Camera phát hiện mã QR
-  Future<bool> onQrDetected(String? rawValue) async {
-    // 0. Quy trình mới: Không quét mã QR nữa
-    if (!enableQrScanning) {
-      debugPrint('[QR Scan] Quét QR đang tắt theo cấu hình quy trình mới.');
-      return false;
-    }
-
-    // 1. Chống duplicate: Nếu đang xử lý hoặc không ở chế độ STANDBY -> Bỏ qua
-    if (_isProcessingQr || _mode != AppMode.standby) {
-      return false;
-    }
-
-    // 2. Validate URL
-    if (!QrService.isValidQrUrl(rawValue)) {
-      // QR không hợp lệ -> Bỏ qua không phát beep, tiếp tục scan
-      return false;
-    }
-
-    final trimmedUrl = rawValue!.trim();
-
-    // 3. Khóa trạng thái xử lý ngay lập tức
-    _isProcessingQr = true;
-    _currentUrl = trimmedUrl;
-    _isFinishSuccess = true;
-
-    debugPrint('========================================');
-    debugPrint('[QR Scan] Quét thành công mã QR hợp lệ!');
-    debugPrint('[QR Scan] URL: $_currentUrl');
-    debugPrint('========================================');
-
-    developer.log('Mã QR hợp lệ phát hiện: $_currentUrl', name: 'AppController');
-
-    // 4. Phát đúng 1 tiếng BÍP
-    await _soundService.playSuccessBeep();
-
-    // 5. Tắt phiên quét NFC khi chuyển sang màn hình làm việc
-    await stopNfcScanning();
-
-    // 6. Chuyển sang WORKING (WebView)
-    _mode = AppMode.working;
-    notifyListeners();
-
-    return true;
   }
 
   /// Đóng WebView và chuyển sang trạng thái FINISH
@@ -398,7 +349,7 @@ class AppController extends ChangeNotifier {
     _cancelFinishTimer();
     _currentUrl = null;
     _currentMaKhach = null;
-    _isProcessingQr = false;
+    _isProcessingCard = false;
     _unregisteredCard = null;
     _currentScannedNfcCode = null;
     _mode = AppMode.standby;

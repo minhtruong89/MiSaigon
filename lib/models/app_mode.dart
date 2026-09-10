@@ -3,7 +3,7 @@ enum AppMode {
   /// Màn hình Splash kiểm tra cấu hình quán và cập nhật
   splash,
 
-  /// Màn hình chờ quét mã QR với Camera preview trực tiếp
+  /// Màn hình chờ nhận thẻ RFID / NFC
   standby,
 
   /// Màn hình hiển thị WebView trang web thành viên

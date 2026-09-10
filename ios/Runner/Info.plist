@@ -26,8 +26,6 @@
 	<string>$(FLUTTER_BUILD_NUMBER)</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
-	<key>NSCameraUsageDescription</key>
-	<string>Mì Sài Gòn cần sử dụng camera để quét Thẻ thành viên QR.</string>
 	<key>NFCReaderUsageDescription</key>
 	<string>Mì Sài Gòn cần NFC để quét Thẻ thành viên RFID/NFC.</string>
 	<key>NSAppTransportSecurity</key>
