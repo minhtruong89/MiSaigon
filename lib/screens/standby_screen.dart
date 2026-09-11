@@ -490,201 +490,26 @@ class _StandbyScreenState extends State<StandbyScreen>
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                // 1. KHU VỰC PHÍA TRÊN: Chiếm toàn bộ không gian còn lại ở trên
+                // 1. KHU VỰC PHÍA TRÊN: Hình ảnh mô tả đưa thẻ vào quét
                 Expanded(
-                  child: _isPos
-                      ? Padding(
-                          padding: const EdgeInsets.only(top: 8, bottom: 8, left: 16, right: 16),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              // Thanh đỏ nằm ngang sát phía trên cùng màn hình
-                              AnimatedBuilder(
-                                animation: _blinkController,
-                                builder: (context, child) {
-                                  final isVisible = _blinkController.value < 0.8;
-                                  return Opacity(
-                                    opacity: isVisible ? 1.0 : 0.0,
-                                    child: child,
-                                  );
-                                },
-                                child: Container(
-                                  height: 28,
-                                  width: double.infinity,
-                                  margin: const EdgeInsets.symmetric(horizontal: 20),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFE50000),
-                                    borderRadius: const BorderRadius.only(
-                                      bottomLeft: Radius.circular(16),
-                                      bottomRight: Radius.circular(16),
-                                    ),
-                                    border: Border.all(
-                                      color: const Color(0xFF990000),
-                                      width: 2.5,
-                                    ),
-                                    boxShadow: const [
-                                      BoxShadow(
-                                        color: Color(0x33E50000),
-                                        blurRadius: 10,
-                                        offset: Offset(0, 3),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-
-                              const SizedBox(height: 12),
-
-                              // Cụm 2 mũi tên vàng nhấp nháy chĩa lên trên (chớp chu kỳ 1s: 800ms hiện, 200ms ẩn)
-                              AnimatedBuilder(
-                                animation: _blinkController,
-                                builder: (context, child) {
-                                  final isVisible = _blinkController.value < 0.8;
-                                  return Opacity(
-                                    opacity: isVisible ? 1.0 : 0.0,
-                                    child: child,
-                                  );
-                                },
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: const [
-                                    UpBlockArrow(width: 68, height: 46),
-                                    SizedBox(width: 28),
-                                    UpBlockArrow(width: 68, height: 46),
-                                  ],
-                                ),
-                              ),
-
-                              const SizedBox(height: 8),
-
-                              // Logo Mì Sài Gòn 0vnđ
-                              Expanded(
-                                child: Center(
-                                  child: ConstrainedBox(
-                                    constraints: const BoxConstraints(
-                                      maxWidth: 420,
-                                      maxHeight: 240,
-                                    ),
-                                    child: Transform.scale(
-                                      scaleX: 1.24,
-                                      scaleY: 1.0,
-                                      child: Image.asset(
-                                        'assets/images/app_icon.png',
-                                        fit: BoxFit.contain,
-                                        errorBuilder: (context, error, stackTrace) => const Icon(
-                                          Icons.restaurant_rounded,
-                                          size: 80,
-                                          color: Color(0xFF00A4E8),
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        )
-                      : Padding(
-                          padding: const EdgeInsets.only(top: 10, bottom: 10, right: 16),
-                          child: Stack(
-                            alignment: Alignment.center,
-                            children: [
-                              // Khe cắm thẻ màu đỏ sát mép trái (chớp chu kỳ 1s: 800ms hiện, 200ms ẩn)
-                              Positioned(
-                                left: 0,
-                                child: AnimatedBuilder(
-                                  animation: _blinkController,
-                                  builder: (context, child) {
-                                    final isVisible = _blinkController.value < 0.8;
-                                    return Opacity(
-                                      opacity: isVisible ? 1.0 : 0.0,
-                                      child: child,
-                                    );
-                                  },
-                                  child: Container(
-                                    width: 32,
-                                    height: 350,
-                                    decoration: BoxDecoration(
-                                      color: const Color(0xFFE50000),
-                                      borderRadius: const BorderRadius.only(
-                                        topRight: Radius.circular(22),
-                                        bottomRight: Radius.circular(22),
-                                      ),
-                                      border: Border.all(
-                                        color: const Color(0xFF990000),
-                                        width: 2.5,
-                                      ),
-                                      boxShadow: const [
-                                        BoxShadow(
-                                          color: Color(0x33E50000),
-                                          blurRadius: 10,
-                                          offset: Offset(3, 0),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              ),
-
-                              // Cụm 2 mũi tên vàng trỏ trái & Logo Mì Sài Gòn 0vnđ
-                              Padding(
-                                padding: const EdgeInsets.only(left: 38),
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  crossAxisAlignment: CrossAxisAlignment.center,
-                                  children: [
-                                    // 2 mũi tên vàng dày trỏ sang trái (chớp chu kỳ 1s: 800ms hiện, 200ms ẩn)
-                                    AnimatedBuilder(
-                                      animation: _blinkController,
-                                      builder: (context, child) {
-                                        final isVisible = _blinkController.value < 0.8;
-                                        return Opacity(
-                                          opacity: isVisible ? 1.0 : 0.0,
-                                          child: child,
-                                        );
-                                      },
-                                      child: Column(
-                                        mainAxisAlignment: MainAxisAlignment.center,
-                                        children: const [
-                                          LeftBlockArrow(width: 48, height: 95),
-                                          SizedBox(height: 32),
-                                          LeftBlockArrow(width: 48, height: 95),
-                                        ],
-                                      ),
-                                    ),
-
-                                    const SizedBox(width: 8),
-
-                                    // Logo Mì Sài Gòn 0vnđ
-                                    Expanded(
-                                      child: Center(
-                                        child: ConstrainedBox(
-                                          constraints: const BoxConstraints(
-                                            maxWidth: 420,
-                                            maxHeight: 240,
-                                          ),
-                                          child: Transform.scale(
-                                            scaleX: 1.24,
-                                            scaleY: 1.0,
-                                            child: Image.asset(
-                                              'assets/images/app_icon.png',
-                                              fit: BoxFit.contain,
-                                              errorBuilder: (context, error, stackTrace) => const Icon(
-                                                Icons.restaurant_rounded,
-                                                size: 80,
-                                                color: Color(0xFF00A4E8),
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                            ],
+                  child: Center(
+                    child: Padding(
+                      padding: const EdgeInsets.only(top: 16, bottom: 12, left: 20, right: 20),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.asset(
+                          'assets/images/sample_scan_card.jpg',
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const Icon(
+                            Icons.contactless_rounded,
+                            size: 100,
+                            color: Color(0xFF00A4E8),
                           ),
                         ),
+                      ),
+                    ),
+                  ),
                 ),
 
                 // 2. KHU VỰC Ở GIỮA: Ngay sát phía trên khu vực phía dưới
@@ -716,10 +541,10 @@ class _StandbyScreenState extends State<StandbyScreen>
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(
-                                  _isPos ? 'ĐẶT THẺ VÀO QUÉT' : 'CHO THẺ VÔ KHE',
+                                const Text(
+                                  'ÁP THẺ VÔ CẢM BIẾN',
                                   textAlign: TextAlign.center,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     color: Colors.white,
                                     fontSize: 24,
                                     fontWeight: FontWeight.w800,
@@ -748,25 +573,51 @@ class _StandbyScreenState extends State<StandbyScreen>
 
                 // 3. KHU VỰC PHÍA DƯỚI: Sát phía cạnh dưới
                 Padding(
-                  padding: const EdgeInsets.only(top: 14, bottom: 10, left: 5, right: 5),
+                  padding: const EdgeInsets.only(top: 14, bottom: 10, left: 16, right: 16),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
-                      // Logo Quỹ Từ Thiện Bông Sen
-                      ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          maxWidth: 450,
-                          maxHeight: 240,
-                        ),
-                        child: Image.asset(
-                          'assets/images/logo_qbs.png',
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) => const SizedBox(height: 60),
-                        ),
+                      // Hàng ngang 2 Logo: Mì Sài Gòn 0vnđ & Quỹ Từ Thiện Bông Sen
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          // Logo Mì Sài Gòn 0vnđ
+                          Flexible(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                maxWidth: 175,
+                                maxHeight: 110,
+                              ),
+                              child: Image.asset(
+                                'assets/images/app_icon.png',
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const SizedBox(height: 60),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          // Logo Quỹ Từ Thiện Bông Sen
+                          Flexible(
+                            child: ConstrainedBox(
+                              constraints: const BoxConstraints(
+                                maxWidth: 185,
+                                maxHeight: 110,
+                              ),
+                              child: Image.asset(
+                                'assets/images/logo_qbs.png',
+                                fit: BoxFit.contain,
+                                errorBuilder: (context, error, stackTrace) =>
+                                    const SizedBox(height: 60),
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
 
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 8),
 
                       // Tiêu đề chương trình
                       const Text(
@@ -809,7 +660,7 @@ class _StandbyScreenState extends State<StandbyScreen>
                         ),
                       ),
 
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 10),
                     ],
                   ),
                 ),
@@ -818,7 +669,7 @@ class _StandbyScreenState extends State<StandbyScreen>
 
             // Icon bánh răng ở góc trên bên phải để mở trực tiếp popup "Định danh cho Quán"
             Positioned(
-              top: _isPos ? 45 : 10,
+              top: 10,
               right: 14,
               child: IconButton(
                 icon: const ThinGearIcon(
