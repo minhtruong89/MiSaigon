@@ -74,31 +74,38 @@
   "members": [
     {
       "ma_khach": "kh_0001",
+      "ho_va_ten": "Lê Văn An",
       "ma_nfc": []
     },
     {
       "ma_khach": "kh_0002",
-      "ma_nfc": [ "00:B9:43:D0"]
+      "ho_va_ten": "Nguyễn Đức Trí",
+      "ma_nfc": [ "00:B9:43:D0", "63:09:79:11"]
     },
     {
       "ma_khach": "kh_0003",
+      "ho_va_ten": "Nguyễn Thị Lệ",
       "ma_nfc": []
     },
     {
       "ma_khach": "nt_0004",
+      "ho_va_ten": "Đoàn Văn Xuân (test)",
       "ma_nfc": []
     },
     {
       "ma_khach": "gl_0005",
+      "ho_va_ten": "Trần Thị Minh (test)",
       "ma_nfc": []
     },
     {
       "ma_khach": "nc4_0006",
-      "ma_nfc": [ "63:09:79:11" ]
+      "ho_va_ten": "Nguyễn Văn Hải (test)",
+      "ma_nfc": [ "a0:a9:f8:cf"]
     },
     {
       "ma_khach": "kh_0005",
-      "ma_nfc": [ "93:d2:e1:11" ]
+      "ho_va_ten": "Nguyễn Văn Tài",
+      "ma_nfc": [ "93:d2:e1:11"]
     }
   ]
 }

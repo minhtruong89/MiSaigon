@@ -1,110 +1,110 @@
 {
   "app_config": {
     "config_version": "1.0.0",
-    "update_url": "http://data.soncamedia.com/firmware/smartbox/miTuThien/MiTuThien_1.0.1.apk",
+    "update_url": "http://data.soncamedia.com/firmware/smartbox/miTuThien/MiTuThien_1.0.0.2_newUI.apk",
     "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxZ2pucWVxd3Npam5zcGhwenF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5MjUzNTEsImV4cCI6MjEwMzUwMTM1MX0.eJpR_qUIGLfZHylI5yoIngAtUr0qYpKLpHH9oKPIhZ4"
   },
   "locations": [
     {
       "ma_quan": "SG34DY",
       "ten_quan": "34D Yersin, P. Nguyễn Thái Bình TPHCM",
-      "url": "https://dtri2206.github.io/freemeals-website/?location=SG34DY",
       "password": "ys"
     },
     {
       "ma_quan": "SG24VH",
       "ten_quan": "24 Vĩnh Hội, P. Vĩnh Hội, TP.HCM",
-      "url": "https://dtri2206.github.io/freemeals-website/?location=SG24VH",
       "password": "vh"
     },
     {
       "ma_quan": "NT73DT",
       "ten_quan": "73 Đặng Tất, Nha Trang",
-      "url": "https://dtri2206.github.io/freemeals-website/?location=NT73DT",
       "password": "dt"
     },
     {
       "ma_quan": "NT52HTT",
       "ten_quan": "52 Hai Tháng Tư, Nha Trang",
-      "url": "https://dtri2206.github.io/freemeals-website/?location=NT52HTT",
       "password": "htt"
     },
     {
       "ma_quan": "GL91DTH",
       "ten_quan": "91 Đinh Tiên Hoàng, Gia Lai",
-      "url": "https://dtri2206.github.io/freemeals-website/?location=GL91DTH",
       "password": "dth"
     },
     {
       "ma_quan": "GL85PDG",
       "ten_quan": "85 Phan Đình Giót, Gia Lai",
-      "url": "https://dtri2206.github.io/freemeals-website/?location=GL85PDG",
       "password": "pdg"
     },
     {
       "ma_quan": "GL00NVX",
       "ten_quan": "Bờ kè Nguyễn Viết Xuân, Gia Lai",
-      "url": "https://dtri2206.github.io/freemeals-website/?location=GL00NVX",
       "password": "nvx"
     },
     {
       "ma_quan": "TVTNNC4",
       "ten_quan": "Tác viên Tuyền Nguyễn - NC4",
-      "url": "https://dtri2206.github.io/freemeals-website/?location=TVTNNC4",
       "password": "tnnc4"
     },
     {
       "ma_quan": "TVHDNT",
       "ten_quan": "Tác viên Hương Đặng - QYV Nha Trang",
-      "url": "https://dtri2206.github.io/freemeals-website/?location=TVHDNT",
       "password": "hdnt"
     },
     {
       "ma_quan": "TVBTNT",
       "ten_quan": "Tác viên Bảo Trâm - QYV Nha Trang",
-      "url": "https://dtri2206.github.io/freemeals-website/?location=TVBTNT",
       "password": "btnt"
     },
     {
       "ma_quan": "TVNHGL",
       "ten_quan": "Tác viên Ngọc Hân - Gia Lai",
-      "url": "https://dtri2206.github.io/freemeals-website/?location=TVNHGL",
       "password": "nhgl"
     },
     {
       "ma_quan": "TVMNGL",
       "ten_quan": "Tác viên Minh Ngọc - Gia Lai",
-      "url": "https://dtri2206.github.io/freemeals-website/?location=TVMNGL",
       "password": "mngl"
+    },
+    {
+      "ma_quan": "SG324PTH",
+      "ten_quan": "324 Phạm Thế Hiển, TPHCM",
+      "password": "pth"
     }
   ],
   "members": [
     {
       "ma_khach": "kh_0001",
+      "ho_va_ten": "Lê Văn An",
       "ma_nfc": []
     },
     {
       "ma_khach": "kh_0002",
-      "ma_nfc": []
+      "ho_va_ten": "Nguyễn Đức Trí",
+      "ma_nfc": [ "00:B9:43:D0", "63:09:79:11"]
     },
     {
       "ma_khach": "kh_0003",
+      "ho_va_ten": "Nguyễn Thị Lệ",
       "ma_nfc": []
     },
     {
       "ma_khach": "nt_0004",
+      "ho_va_ten": "Đoàn Văn Xuân (test)",
       "ma_nfc": []
     },
     {
       "ma_khach": "gl_0005",
-      "ma_nfc": [ "a0:a9:f8:cf" ]
+      "ho_va_ten": "Trần Thị Minh (test)",
+      "ma_nfc": []
     },
     {
       "ma_khach": "nc4_0006",
-      "ma_nfc": [ "63:09:79:11" ]
+      "ho_va_ten": "Nguyễn Văn Hải (test)",
+      "ma_nfc": [ "a0:a9:f8:cf" ]
     },
     {
       "ma_khach": "kh_0005",
+      "ho_va_ten": "Nguyễn Văn Tài",
       "ma_nfc": [ "93:d2:e1:11" ]
     }
   ]

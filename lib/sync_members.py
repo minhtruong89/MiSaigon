@@ -10,6 +10,7 @@ import sys
 import json
 import re
 import shutil
+import csv
 from pathlib import Path
 
 # Đảm bảo console Windows in tiếng Việt UTF-8 không bị lỗi charmap
@@ -77,19 +78,31 @@ def sync_members(
     else:
         delimiter = "\t"
 
-    header_tokens = [h.strip() for h in first_line.split(delimiter)]
+    # Dùng csv.reader để xử lý chính xác cả chuỗi có dấu nháy kép hoặc dấu phẩy bên trong
+    reader = csv.reader(lines, delimiter=delimiter)
+    all_rows = [row for row in reader if row]
+    if not all_rows:
+        print("[-] File thành viên rỗng hoặc không đọc được!")
+        return False
+
+    header_tokens = [h.strip() for h in all_rows[0]]
 
     col_khach = 0
+    col_ten = -1
     col_nfc = -1
 
     for idx, h in enumerate(header_tokens):
         h_clean = h.lower().replace("_", " ").strip()
         if "khách" in h_clean or "khach" in h_clean:
             col_khach = idx
+        elif any(k in h_clean for k in ["họ và tên", "ho va ten", "họ tên", "ho ten", "họ", "tên", "name"]):
+            col_ten = idx
         elif "nfc" in h_clean:
             col_nfc = idx
 
     print(f"    - Cột Mã khách: index {col_khach} ('{header_tokens[col_khach]}')")
+    if col_ten != -1:
+        print(f"    - Cột Họ và tên: index {col_ten} ('{header_tokens[col_ten]}')")
     if col_nfc != -1:
         print(f"    - Cột Mã NFC:   index {col_nfc} ('{header_tokens[col_nfc]}')")
     else:
@@ -98,8 +111,8 @@ def sync_members(
 
     # Trích xuất dữ liệu members
     new_members = []
-    for line_idx, line in enumerate(lines[1:], start=2):
-        tokens = [t.strip() for t in line.split(delimiter)]
+    for line_idx, raw_tokens in enumerate(all_rows[1:], start=2):
+        tokens = [t.strip() for t in raw_tokens]
         if col_khach >= len(tokens):
             continue
 
@@ -107,20 +120,31 @@ def sync_members(
         if not ma_khach:
             continue
 
+        ho_va_ten = ""
+        if col_ten != -1 and col_ten < len(tokens):
+            ho_va_ten = tokens[col_ten]
+
         ma_nfc_list = []
         if col_nfc < len(tokens):
-            nfc_raw = tokens[col_nfc]
+            nfc_raw = tokens[col_nfc].strip()
             if nfc_raw:
-                ma_nfc_list = [c.strip() for c in re.split(r"[,;]+", nfc_raw) if c.strip()]
+                # Bỏ dấu ngoặc vuông và dấu nháy bao quanh nếu có
+                cleaned_nfc = nfc_raw.strip("[]'\"").strip()
+                # Tách theo dấu phẩy, chấm phẩy hoặc xuống dòng
+                for part in re.split(r"[,;\r\n]+", cleaned_nfc):
+                    code = part.strip().strip("'\"").strip()
+                    if code:
+                        ma_nfc_list.append(code)
 
         new_members.append({
             "ma_khach": ma_khach,
+            "ho_va_ten": ho_va_ten,
             "ma_nfc": ma_nfc_list
         })
 
     print(f"[2] Đã trích xuất {len(new_members)} thành viên:")
     for m in new_members:
-        print(f"    + {m['ma_khach']}: {m['ma_nfc']}")
+        print(f"    + {m['ma_khach']} ({m['ho_va_ten']}): {m['ma_nfc']}")
 
     # Đọc và cập nhật quan_info.json
     print(f"\n[3] Đang cập nhật vào file: {json_path}")
@@ -147,14 +171,14 @@ def sync_members(
     # Format JSON đẹp mắt
     json_text = json.dumps(data, indent=2, ensure_ascii=False)
 
-    # Định dạng mảng ma_nfc gọn gàng trên 1 dòng
+    # Định dạng mảng ma_nfc gọn gàng trên 1 dòng: [ "00:B9:43:D0", "63:09:79:11"]
     def _format_nfc_inline(m):
         prefix = m.group(1)
         body = m.group(2)
         items = re.findall(r'"[^"]*"', body)
         if not items:
             return f"{prefix}[]"
-        return f'{prefix}[ ' + ", ".join(items) + " ]"
+        return f'{prefix}[ ' + ", ".join(items) + "]"
 
     json_text = re.sub(r'("ma_nfc":\s*)\[([\s\S]*?)\]', _format_nfc_inline, json_text)
 
