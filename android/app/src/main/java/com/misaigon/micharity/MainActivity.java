@@ -1,6 +1,7 @@
 package com.misaigon.micharity;
 
 import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
@@ -199,6 +200,8 @@ public class MainActivity extends FlutterActivity {
                             result.success(true);
                         }
                     }
+                } else if (call.method.equals("getDeviceUptimeMs")) {
+                    result.success(android.os.SystemClock.elapsedRealtime());
                 } else {
                     result.notImplemented();
                 }
@@ -245,6 +248,56 @@ public class MainActivity extends FlutterActivity {
                     }
                 }
             });
+
+        registerNfcStateReceiver();
+    }
+
+    private BroadcastReceiver nfcStateReceiver;
+
+    private void registerNfcStateReceiver() {
+        if (nfcStateReceiver != null) return;
+        nfcStateReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (NfcAdapter.ACTION_ADAPTER_STATE_CHANGED.equals(intent.getAction())) {
+                    int state = intent.getIntExtra(NfcAdapter.EXTRA_ADAPTER_STATE, NfcAdapter.STATE_OFF);
+                    logToFlutter("NFC Adapter State changed: " + state);
+                    if (state == NfcAdapter.STATE_ON) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (nfcChannel != null) {
+                                    try {
+                                        nfcChannel.invokeMethod("onNfcStatusChanged", true);
+                                    } catch (Exception ignored) {}
+                                }
+                                if (isNfcScanning) {
+                                    enableNfcScanning();
+                                }
+                            }
+                        });
+                    } else if (state == NfcAdapter.STATE_OFF) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                if (nfcChannel != null) {
+                                    try {
+                                        nfcChannel.invokeMethod("onNfcStatusChanged", false);
+                                    } catch (Exception ignored) {}
+                                }
+                            }
+                        });
+                    }
+                }
+            }
+        };
+        try {
+            IntentFilter filter = new IntentFilter(NfcAdapter.ACTION_ADAPTER_STATE_CHANGED);
+            registerReceiver(nfcStateReceiver, filter);
+            logToFlutter("NFC state broadcast receiver registered");
+        } catch (Exception e) {
+            logToFlutter("registerNfcStateReceiver error: " + e.getMessage());
+        }
     }
 
     private void logToFlutter(String message) {
@@ -354,6 +407,17 @@ public class MainActivity extends FlutterActivity {
         if (isNfcScanning) {
             disableNfcScanning();
         }
+    }
+
+    @Override
+    protected void onDestroy() {
+        if (nfcStateReceiver != null) {
+            try {
+                unregisterReceiver(nfcStateReceiver);
+            } catch (Exception ignored) {}
+            nfcStateReceiver = null;
+        }
+        super.onDestroy();
     }
 
     @Override

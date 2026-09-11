@@ -42,6 +42,9 @@ class _StandbyScreenState extends State<StandbyScreen>
   bool _isDialogOpen = false;
   bool _isNfcDialogOpen = false;
   bool _hasPromptedNfc = false;
+  BuildContext? _nfcDialogContext;
+  final DateTime _screenInitTime = DateTime.now();
+  int _consecutiveDisabledCount = 0;
   Timer? _nfcStatusPollingTimer;
   final TextEditingController _nfcTextController = TextEditingController();
   Timer? _nfcDebounceTimer;
@@ -125,12 +128,12 @@ class _StandbyScreenState extends State<StandbyScreen>
       _initNfcAndScan();
     });
 
-    // Polling kiểm tra trạng thái NFC mỗi 3 giây nếu NFC bị tắt trong lúc app đang chạy
-    _nfcStatusPollingTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+    // Polling kiểm tra trạng thái NFC mỗi 2 giây để bắt kịp thời điểm phần cứng sẵn sàng sau khởi động máy
+    _nfcStatusPollingTimer =
+        Timer.periodic(const Duration(milliseconds: 2000), (_) {
       if (mounted &&
           widget.controller.mode == AppMode.standby &&
-          !_isDialogOpen &&
-          !_isNfcDialogOpen) {
+          !_isDialogOpen) {
         widget.controller.checkNfcStatus();
       }
     });
@@ -146,15 +149,14 @@ class _StandbyScreenState extends State<StandbyScreen>
       _resetDimTimer();
     }
 
-    // Reset cờ khi NFC được bật lại để có thể nhắc tiếp nếu sau này người dùng lại tắt NFC
+    // Quản lý trạng thái nhắc bật NFC thông minh (chống hiện giả khi phần cứng vừa boot)
     if (widget.controller.isNfcEnabled) {
       _hasPromptedNfc = false;
-    } else if (widget.controller.nfcStatus == NfcSupportStatus.disabled &&
-        !_hasPromptedNfc &&
-        !_isDialogOpen &&
-        !_isNfcDialogOpen) {
-      _hasPromptedNfc = true;
-      _showNfcEnableDialog();
+      _consecutiveDisabledCount = 0;
+      _dismissNfcDialogIfOpen();
+    } else if (widget.controller.nfcStatus == NfcSupportStatus.disabled) {
+      _consecutiveDisabledCount++;
+      _promptNfcIfEligible();
     }
 
     final lastCard = widget.controller.lastDetectedCard;
@@ -275,12 +277,13 @@ class _StandbyScreenState extends State<StandbyScreen>
     await widget.controller.checkNfcStatus();
     if (!mounted) return;
 
-    if (widget.controller.nfcStatus == NfcSupportStatus.disabled &&
-        !_hasPromptedNfc &&
-        !_isDialogOpen &&
-        !_isNfcDialogOpen) {
-      _hasPromptedNfc = true;
-      _showNfcEnableDialog();
+    if (widget.controller.isNfcEnabled) {
+      _hasPromptedNfc = false;
+      _consecutiveDisabledCount = 0;
+      _dismissNfcDialogIfOpen();
+    } else if (widget.controller.nfcStatus == NfcSupportStatus.disabled) {
+      _consecutiveDisabledCount++;
+      await _promptNfcIfEligible();
     }
 
     _syncNfcScanning();
@@ -308,13 +311,13 @@ class _StandbyScreenState extends State<StandbyScreen>
       _wakeUp();
       widget.controller.checkNfcStatus().then((_) {
         if (!mounted) return;
-        if (widget.controller.nfcStatus == NfcSupportStatus.disabled &&
-            !_isDialogOpen &&
-            !_isNfcDialogOpen) {
-          _hasPromptedNfc = true;
-          _showNfcEnableDialog();
-        } else if (widget.controller.isNfcEnabled) {
+        if (widget.controller.isNfcEnabled) {
           _hasPromptedNfc = false;
+          _consecutiveDisabledCount = 0;
+          _dismissNfcDialogIfOpen();
+        } else if (widget.controller.nfcStatus == NfcSupportStatus.disabled) {
+          _consecutiveDisabledCount++;
+          _promptNfcIfEligible();
         }
         _syncNfcScanning();
       });
@@ -343,6 +346,54 @@ class _StandbyScreenState extends State<StandbyScreen>
     super.dispose();
   }
 
+  /// Tự động đóng dialog bật NFC nếu phát hiện NFC đã được kích hoạt
+  void _dismissNfcDialogIfOpen() {
+    if (_isNfcDialogOpen && _nfcDialogContext != null) {
+      try {
+        if (Navigator.of(_nfcDialogContext!).canPop()) {
+          Navigator.of(_nfcDialogContext!).pop();
+          debugPrint('[NFC] Tự động đóng dialog kích hoạt NFC vì phần cứng đã sẵn sàng.');
+        }
+      } catch (_) {}
+      _nfcDialogContext = null;
+      _isNfcDialogOpen = false;
+    }
+  }
+
+  /// Kiểm tra các điều kiện an toàn trước khi hiển thị popup bật NFC
+  Future<void> _promptNfcIfEligible({bool force = false}) async {
+    if (!mounted || _isDialogOpen || _isNfcDialogOpen || _hasPromptedNfc) return;
+
+    if (!force) {
+      // 1. Kiểm tra thời gian hệ thống khởi động (uptime)
+      final uptimeMs = await widget.controller.nfcService.getDeviceUptimeMs();
+      final isSystemBooting = uptimeMs < 60000; // Máy vừa bật nguồn dưới 60 giây
+
+      // 2. Kiểm tra thời gian kể từ khi mở StandbyScreen (dưới 15 giây)
+      final timeSinceInit =
+          DateTime.now().difference(_screenInitTime).inSeconds;
+      final isAppWarmingUp = timeSinceInit < 15;
+
+      if (isSystemBooting || isAppWarmingUp) {
+        debugPrint(
+          '[NFC Warmup] Phần cứng đang khởi động (uptime: ${uptimeMs}ms, appAge: ${timeSinceInit}s). Tạm hoãn hiện dialog nhắc NFC.',
+        );
+        return;
+      }
+
+      // 3. Phải qua ít nhất 3 lần kiểm tra định kỳ liên tiếp đều là disabled
+      if (_consecutiveDisabledCount < 3) {
+        debugPrint(
+          '[NFC Warmup] Xác thực trạng thái ổn định: $_consecutiveDisabledCount/3 lần. Tiếp tục đợi phần cứng.',
+        );
+        return;
+      }
+    }
+
+    _hasPromptedNfc = true;
+    _showNfcEnableDialog();
+  }
+
   /// Hộp thoại nhắc nhở bật NFC nếu máy hỗ trợ nhưng đang tắt
   Future<void> _showNfcEnableDialog() async {
     if (!mounted || _isNfcDialogOpen || _isDialogOpen) return;
@@ -354,58 +405,62 @@ class _StandbyScreenState extends State<StandbyScreen>
       await showDialog(
         context: context,
         barrierDismissible: false,
-        builder: (ctx) => AlertDialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-          title: const Row(
-            children: [
-              Icon(Icons.nfc_rounded, color: Color(0xFF00A4E8), size: 28),
-              SizedBox(width: 12),
-              Text(
-                'Kích hoạt NFC',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF1E293B),
+        builder: (ctx) {
+          _nfcDialogContext = ctx;
+          return AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            title: const Row(
+              children: [
+                Icon(Icons.nfc_rounded, color: Color(0xFF00A4E8), size: 28),
+                SizedBox(width: 12),
+                Text(
+                  'Kích hoạt NFC',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+              ],
+            ),
+            content: const Text(
+              'Thiết bị hỗ trợ quét thẻ NFC/RFID nhưng tính năng NFC đang TẮT trong cài đặt máy.\n\nBạn có muốn mở Cài đặt để bật NFC ngay bây giờ?',
+              style: TextStyle(fontSize: 15, height: 1.45, color: Color(0xFF334155)),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text(
+                  'Để sau',
+                  style: TextStyle(color: Color(0xFF64748B), fontSize: 16),
+                ),
+              ),
+              ElevatedButton.icon(
+                onPressed: () {
+                  Navigator.pop(ctx);
+                  widget.controller.nfcService.openNfcSettings();
+                },
+                icon: const Icon(Icons.settings, size: 20),
+                label: const Text(
+                  'Mở Cài đặt NFC',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF00A4E8),
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                 ),
               ),
             ],
-          ),
-          content: const Text(
-            'Thiết bị hỗ trợ quét thẻ NFC/RFID nhưng tính năng NFC đang TẮT trong cài đặt máy.\n\nBạn có muốn mở Cài đặt để bật NFC ngay bây giờ?',
-            style: TextStyle(fontSize: 15, height: 1.45, color: Color(0xFF334155)),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text(
-                'Để sau',
-                style: TextStyle(color: Color(0xFF64748B), fontSize: 16),
-              ),
-            ),
-            ElevatedButton.icon(
-              onPressed: () {
-                Navigator.pop(ctx);
-                widget.controller.nfcService.openNfcSettings();
-              },
-              icon: const Icon(Icons.settings, size: 20),
-              label: const Text(
-                'Mở Cài đặt NFC',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-              ),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF00A4E8),
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       );
     } finally {
+      _nfcDialogContext = null;
       _isNfcDialogOpen = false;
       _startDimTimer();
     }
@@ -635,8 +690,9 @@ class _StandbyScreenState extends State<StandbyScreen>
                 // 2. KHU VỰC Ở GIỮA: Ngay sát phía trên khu vực phía dưới
                 GestureDetector(
                   onTap: () {
-                    if (widget.controller.nfcStatus == NfcSupportStatus.disabled) {
-                      _showNfcEnableDialog();
+                    if (widget.controller.nfcStatus ==
+                        NfcSupportStatus.disabled) {
+                      _promptNfcIfEligible(force: true);
                     }
                   },
                   child: Container(

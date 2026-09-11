@@ -46,7 +46,19 @@ class AppController extends ChangeNotifier {
         _quanService = quanService ?? QuanService(),
         _nfcService = nfcService ?? NfcService(),
         _memberApiService = memberApiService ?? MemberApiService(),
-        _printerService = printerService ?? SunmiPrinterService();
+        _printerService = printerService ?? SunmiPrinterService() {
+    _nfcService.onStatusChanged = (isEnabled) {
+      if (_isDisposed) return;
+      final newStatus =
+          isEnabled ? NfcSupportStatus.enabled : NfcSupportStatus.disabled;
+      if (_nfcStatus != newStatus) {
+        _nfcStatus = newStatus;
+        debugPrint(
+            '[NFC] Trạng thái NFC cập nhật tức thì từ native broadcast: $_nfcStatus');
+        notifyListeners();
+      }
+    };
+  }
 
   // Getters
   AppMode get mode => _mode;

@@ -188,6 +188,9 @@ class NfcService {
 
   ValueChanged<NfcCardInfo>? _activeCardCallback;
 
+  /// Callback lắng nghe thay đổi trạng thái NFC từ broadcast hệ thống
+  ValueChanged<bool>? onStatusChanged;
+
   void _initNativeChannelListener() {
     _nfcChannel.setMethodCallHandler((call) async {
       if (call.method == 'onNativeLog') {
@@ -206,11 +209,28 @@ class NfcService {
           developer.log('Lỗi xử lý tag từ native channel: $e', name: 'NfcService');
           debugPrint('[NFC Service] Lỗi xử lý tag: $e');
         }
+      } else if (call.method == 'onNfcStatusChanged') {
+        final isEnabled = call.arguments == true;
+        debugPrint('[NFC Service] onNfcStatusChanged từ Native Broadcast: $isEnabled');
+        onStatusChanged?.call(isEnabled);
       }
     });
   }
 
   bool get isSessionActive => _isSessionActive;
+
+  /// Lấy thời gian từ lúc máy khởi động (ms) qua SystemClock.elapsedRealtime()
+  Future<int> getDeviceUptimeMs() async {
+    try {
+      if (Platform.isAndroid) {
+        final uptime = await _nfcChannel.invokeMethod<int>('getDeviceUptimeMs');
+        if (uptime != null) return uptime;
+      }
+    } catch (e) {
+      debugPrint('[NFC Service] Lỗi getDeviceUptimeMs: $e');
+    }
+    return 999999;
+  }
 
   /// Kiểm tra thiết bị có hỗ trợ NFC và NFC đang bật hay tắt
   Future<NfcSupportStatus> checkSupportStatus() async {
