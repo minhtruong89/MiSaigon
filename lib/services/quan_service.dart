@@ -15,6 +15,7 @@ class QuanService {
   static const String keyTenQuan = 'ten_quan';
   static const String keyCachedJson = 'cached_quan_info_json';
   static const String keyIsPosDevice = 'is_pos_device';
+  static const String keyIsPrintPos = 'is_print_pos';
 
   final http.Client _httpClient;
 
@@ -193,14 +194,14 @@ class QuanService {
     }
   }
 
-  /// Lấy cấu hình thiết bị POS đã lưu trong SharedPreferences (mặc định: false)
+  /// Lấy cấu hình thiết bị POS đã lưu trong SharedPreferences (mặc định: true)
   Future<bool> getStoredIsPosDevice() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      return prefs.getBool(keyIsPosDevice) ?? false;
+      return prefs.getBool(keyIsPosDevice) ?? true;
     } catch (e) {
       developer.log('Lỗi đọc is_pos_device: $e', name: 'QuanService');
-      return false;
+      return true;
     }
   }
 
@@ -211,6 +212,28 @@ class QuanService {
       return await prefs.setBool(keyIsPosDevice, isPos);
     } catch (e) {
       developer.log('Lỗi lưu is_pos_device: $e', name: 'QuanService');
+      return false;
+    }
+  }
+
+  /// Lấy cấu hình in trên thiết bị POS đã lưu trong SharedPreferences (mặc định: false)
+  Future<bool> getStoredIsPrintPos() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool(keyIsPrintPos) ?? false;
+    } catch (e) {
+      developer.log('Lỗi đọc is_print_pos: $e', name: 'QuanService');
+      return false;
+    }
+  }
+
+  /// Lưu cấu hình in trên thiết bị POS vào SharedPreferences
+  Future<bool> saveIsPrintPos(bool isPrint) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return await prefs.setBool(keyIsPrintPos, isPrint);
+    } catch (e) {
+      developer.log('Lỗi lưu is_print_pos: $e', name: 'QuanService');
       return false;
     }
   }

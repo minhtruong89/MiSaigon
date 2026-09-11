@@ -45,19 +45,18 @@ class SoundService {
     }
   }
 
-  /// Phát đúng 1 tiếng bíp lớn và rung haptic khi QR hoặc Thẻ NFC hợp lệ
-  Future<void> playSuccessBeep() async {
-    // 1. Phản hồi rung haptic qua Flutter
+  /// Phát âm thanh Nốt Sol (G4: 392Hz) khi Quét Thẻ/Mã thành công
+  Future<void> playScanSuccessBeep() async {
+    // 1. Phản hồi rung haptic
     try {
-      await HapticFeedback.vibrate();
-      await HapticFeedback.heavyImpact();
+      await HapticFeedback.selectionClick();
     } catch (_) {}
 
-    // 2. Gọi Native Audio (Kích hoạt Vibrator phần cứng + ToneGenerator + AudioTrack)
+    // 2. Gọi Native Audio (Kích hoạt Vibrator phần cứng + AudioTrack Nốt Sol)
     try {
-      await _nativeAudioChannel.invokeMethod<bool>('playBeep');
+      await _nativeAudioChannel.invokeMethod<bool>('playScanBeep');
     } catch (e) {
-      developer.log('Native beep error: $e', name: 'SoundService');
+      developer.log('Native scan beep error: $e', name: 'SoundService');
     }
 
     // 3. Dự phòng song song SystemSound
@@ -65,15 +64,48 @@ class SoundService {
       await SystemSound.play(SystemSoundType.alert);
     } catch (_) {}
 
-    // 4. Dự phòng AudioPlayer
+    // 4. Dự phòng AudioPlayer với file scan_success.wav (Nốt Sol)
     try {
       await init();
       await _player.stop();
-      await _player.play(AssetSource('audio/qr_success.wav'), volume: 1.0);
+      await _player.play(AssetSource('audio/scan_success.wav'), volume: 1.0);
     } catch (e) {
       developer.log('AudioPlayer error: $e', name: 'SoundService');
     }
   }
+
+  /// Phát âm thanh Nốt Đô (C4: 261Hz) khi Xác nhận suất ăn thành công
+  Future<void> playConfirmSuccessBeep() async {
+    // 1. Phản hồi rung haptic mạnh
+    try {
+      await HapticFeedback.vibrate();
+      await HapticFeedback.heavyImpact();
+    } catch (_) {}
+
+    // 2. Gọi Native Audio (Kích hoạt Vibrator phần cứng + AudioTrack Nốt Đô)
+    try {
+      await _nativeAudioChannel.invokeMethod<bool>('playConfirmBeep');
+    } catch (e) {
+      developer.log('Native confirm beep error: $e', name: 'SoundService');
+    }
+
+    // 3. Dự phòng song song SystemSound
+    try {
+      await SystemSound.play(SystemSoundType.click);
+    } catch (_) {}
+
+    // 4. Dự phòng AudioPlayer với file confirm_success.wav (Nốt Đô)
+    try {
+      await init();
+      await _player.stop();
+      await _player.play(AssetSource('audio/confirm_success.wav'), volume: 1.0);
+    } catch (e) {
+      developer.log('AudioPlayer error: $e', name: 'SoundService');
+    }
+  }
+
+  /// Tương thích ngược: mặc định phát tiếng scan beep
+  Future<void> playSuccessBeep() => playScanSuccessBeep();
 
   /// Rung haptic phần cứng (dùng khi thẻ chưa đăng ký hoặc nhận thẻ)
   Future<void> vibrateOnly() async {

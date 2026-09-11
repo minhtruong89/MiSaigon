@@ -40,7 +40,8 @@ public class MainActivity extends FlutterActivity {
     private static final String CHANNEL_AUDIO = "com.misaigon.micharity/audio";
     private static final String CHANNEL_NFC = "com.misaigon.micharity/nfc";
 
-    private short[] beepSamples;
+    private short[] solSamples;
+    private short[] doSamples;
     private MethodChannel nfcChannel;
     private NfcAdapter nfcAdapter;
     private boolean isNfcScanning = false;
@@ -128,10 +129,15 @@ public class MainActivity extends FlutterActivity {
             .setMethodCallHandler(new MethodChannel.MethodCallHandler() {
                 @Override
                 public void onMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
-                    if (call.method.equals("playBeep")) {
+                    if (call.method.equals("playScanBeep") || call.method.equals("playBeep")) {
+                        // Nốt Sol (G4: 392Hz) khi Quét thành công
+                        triggerNativeVibration(120);
+                        playNativeSolBeep();
+                        result.success(true);
+                    } else if (call.method.equals("playConfirmBeep")) {
+                        // Nốt Đô (C4: 261Hz) khi Xác nhận thành công
                         triggerNativeVibration(180);
-                        playNativeTone();
-                        playNativeBeep();
+                        playNativeDoBeep();
                         result.success(true);
                     } else if (call.method.equals("vibrate")) {
                         triggerNativeVibration(150);
@@ -407,24 +413,56 @@ public class MainActivity extends FlutterActivity {
     private void initBeepSamples() {
         try {
             int sampleRate = 44100;
-            int numSamples = sampleRate * 250 / 1000; // 250ms
-            beepSamples = new short[numSamples];
-            double f1 = 2400.0; // 2.4 kHz (tần số vang lớn nhất của loa ngoài điện thoại)
-            double f2 = 1200.0; // 1.2 kHz
 
-            for (int i = 0; i < numSamples; ++i) {
+            // 1. Nốt Sol (G4 = 392.00 Hz, G5 = 783.99 Hz, G6 = 1567.98 Hz) - 180ms
+            int numSol = sampleRate * 180 / 1000;
+            solSamples = new short[numSol];
+            double solG4 = 392.00;
+            double solG5 = 783.99;
+            double solG6 = 1567.98;
+            int solAttack = sampleRate * 15 / 1000;
+            int solDecay = sampleRate * 60 / 1000;
+            int solSustainEnd = numSol - solDecay;
+
+            for (int i = 0; i < numSol; ++i) {
                 double t = (double) i / sampleRate;
                 double envelope = 1.0;
-                if (i < 200) {
-                    envelope = (double) i / 200;
-                } else if (i > numSamples - 600) {
-                    envelope = (double) (numSamples - i) / 600;
+                if (i < solAttack) {
+                    envelope = (double) i / solAttack;
+                } else if (i > solSustainEnd) {
+                    envelope = (double) (numSol - i) / solDecay;
                 }
-                double wave = Math.sin(2 * Math.PI * f1 * t) * 0.75 + Math.sin(2 * Math.PI * f2 * t) * 0.25;
-                beepSamples[i] = (short) (wave * 32767 * envelope);
+                double wave = Math.sin(2 * Math.PI * solG4 * t) * 0.35 +
+                              Math.sin(2 * Math.PI * solG5 * t) * 0.45 +
+                              Math.sin(2 * Math.PI * solG6 * t) * 0.20;
+                solSamples[i] = (short) (wave * 32767 * envelope * 0.9);
             }
-        } catch (Exception ignored) {
-        }
+
+            // 2. Nốt Do (C4 = 261.63 Hz, C5 = 523.25 Hz, C6 = 1046.50 Hz) - 320ms
+            int numDo = sampleRate * 320 / 1000;
+            doSamples = new short[numDo];
+            double doC4 = 261.63;
+            double doC5 = 523.25;
+            double doC6 = 1046.50;
+            int doAttack = sampleRate * 20 / 1000;
+            int doDecay = sampleRate * 160 / 1000;
+            int doSustainEnd = numDo - doDecay;
+
+            for (int i = 0; i < numDo; ++i) {
+                double t = (double) i / sampleRate;
+                double envelope = 1.0;
+                if (i < doAttack) {
+                    envelope = (double) i / doAttack;
+                } else if (i > doSustainEnd) {
+                    envelope = (double) (numDo - i) / doDecay;
+                }
+                double wave = Math.sin(2 * Math.PI * doC4 * t) * 0.40 +
+                              Math.sin(2 * Math.PI * doC5 * t) * 0.45 +
+                              Math.sin(2 * Math.PI * doC6 * t) * 0.15;
+                doSamples[i] = (short) (wave * 32767 * envelope * 0.9);
+            }
+
+        } catch (Exception ignored) {}
     }
 
     private void triggerNativeVibration(int durationMs) {
@@ -440,40 +478,23 @@ public class MainActivity extends FlutterActivity {
         } catch (Exception ignored) {}
     }
 
-    private void playNativeTone() {
-        try {
-            final ToneGenerator tg = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
-            tg.startTone(ToneGenerator.TONE_PROP_BEEP, 200);
-            new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
-                @Override
-                public void run() {
-                    try {
-                        tg.release();
-                    } catch (Exception ignored) {}
-                }
-            }, 350);
-        } catch (Exception e) {
-            try {
-                final ToneGenerator alt = new ToneGenerator(AudioManager.STREAM_ALARM, 100);
-                alt.startTone(ToneGenerator.TONE_PROP_BEEP, 200);
-                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
-                    @Override
-                    public void run() {
-                        try {
-                            alt.release();
-                        } catch (Exception ignored) {}
-                    }
-                }, 350);
-            } catch (Exception ignored) {}
+    private void playNativeSolBeep() {
+        if (solSamples == null) {
+            initBeepSamples();
         }
+        playPcmTrack(solSamples, 250);
     }
 
-    private void playNativeBeep() {
-        try {
-            if (beepSamples == null) {
-                initBeepSamples();
-            }
+    private void playNativeDoBeep() {
+        if (doSamples == null) {
+            initBeepSamples();
+        }
+        playPcmTrack(doSamples, 400);
+    }
 
+    private void playPcmTrack(final short[] pcm, int releaseDelayMs) {
+        if (pcm == null) return;
+        try {
             int sampleRate = 44100;
             AudioAttributes audioAttributes = new AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_ASSISTANCE_SONIFICATION)
@@ -491,7 +512,7 @@ public class MainActivity extends FlutterActivity {
                 AudioFormat.CHANNEL_OUT_MONO,
                 AudioFormat.ENCODING_PCM_16BIT
             );
-            int bufferSize = Math.max(beepSamples.length * 2, minBufferSize > 0 ? minBufferSize : 4096);
+            int bufferSize = Math.max(pcm.length * 2, minBufferSize > 0 ? minBufferSize : 4096);
 
             final AudioTrack track = new AudioTrack(
                 audioAttributes,
@@ -501,7 +522,7 @@ public class MainActivity extends FlutterActivity {
                 AudioManager.AUDIO_SESSION_ID_GENERATE
             );
 
-            track.write(beepSamples, 0, beepSamples.length);
+            track.write(pcm, 0, pcm.length);
             track.setVolume(1.0f);
             track.play();
 
@@ -513,15 +534,19 @@ public class MainActivity extends FlutterActivity {
                         track.release();
                     } catch (Exception ignored) {}
                 }
-            }, 400);
+            }, releaseDelayMs);
         } catch (Exception e) {
-            // Fallback RingtoneManager to notification stream
             try {
-                Uri notificationUri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
-                Ringtone ringtone = RingtoneManager.getRingtone(getApplicationContext(), notificationUri);
-                if (ringtone != null) {
-                    ringtone.play();
-                }
+                final ToneGenerator tg = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
+                tg.startTone(ToneGenerator.TONE_PROP_BEEP, 200);
+                new android.os.Handler(android.os.Looper.getMainLooper()).postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        try {
+                            tg.release();
+                        } catch (Exception ignored) {}
+                    }
+                }, 300);
             } catch (Exception ignored) {}
         }
     }

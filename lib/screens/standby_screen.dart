@@ -15,7 +15,7 @@ export '../widgets/thin_gear_icon.dart';
 /// - true: Máy POS (vùng quét & mũi tên ở trên cùng, "ĐẶT THẺ VÀO QUÉT")
 /// Được quản lý qua SharedPreferences và tùy chỉnh tại popup "Định danh cho Quán".
 /// ============================================================================
-const bool flagPosDevice = false;
+const bool flagPosDevice = true;
 
 /// Màn hình STANDBY: Giao diện Kiosk nhận thẻ RFID / NFC theo thiết kế mới
 class StandbyScreen extends StatefulWidget {
@@ -25,6 +25,7 @@ class StandbyScreen extends StatefulWidget {
   final bool? isPosDevice;
 
   const StandbyScreen({
+    
     super.key,
     required this.controller,
     this.isPosDevice,

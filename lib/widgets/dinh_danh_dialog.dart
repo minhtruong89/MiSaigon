@@ -18,6 +18,7 @@ Future<void> showChangeDinhDanhDialog(
   String? dialogError;
   bool isChecking = false;
   bool isPosDevice = controller.isPosDevice;
+  bool isPrintPos = controller.isPrintPos;
 
   await showDialog(
     context: context,
@@ -219,46 +220,158 @@ Future<void> showChangeDinhDanhDialog(
 
                     const SizedBox(height: 12),
 
-                    // Cụm cấu hình Thiết bị POS
+                    // Cụm cấu hình Thiết bị POS & In POS
                     Container(
                       decoration: BoxDecoration(
                         color: const Color(0xFFF0F9FF),
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: const Color(0xFFBAE6FD)),
                       ),
-                      child: CheckboxListTile(
-                        value: isPosDevice,
-                        onChanged: (bool? val) async {
-                          final newVal = val ?? false;
-                          setDialogState(() {
-                            isPosDevice = newVal;
-                          });
-                          await controller.setIsPosDevice(newVal);
-                        },
-                        title: const Text(
-                          'Thiết bị POS',
-                          style: TextStyle(
-                            fontSize: 14,
-                            fontWeight: FontWeight.w600,
-                            color: Color(0xFF0369A1),
-                          ),
-                        ),
-                        subtitle: const Text(
-                          'Vùng quét thẻ và mũi tên chuyển lên phía trên',
-                          style: TextStyle(
-                            fontSize: 11,
-                            color: Color(0xFF64748B),
-                          ),
-                        ),
-                        activeColor: const Color(0xFF00A4E8),
-                        contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 0),
-                        visualDensity: VisualDensity.compact,
-                        controlAffinity: ListTileControlAffinity.leading,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
+                      child: isPosDevice
+                          ? Padding(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              child: Row(
+                                children: [
+                                  // Nút check: Thiết bị POS
+                                  Expanded(
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(8),
+                                      onTap: () async {
+                                        final newVal = !isPosDevice;
+                                        setDialogState(() {
+                                          isPosDevice = newVal;
+                                        });
+                                        await controller.setIsPosDevice(newVal);
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 4),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Checkbox(
+                                              value: isPosDevice,
+                                              activeColor:
+                                                  const Color(0xFF00A4E8),
+                                              visualDensity:
+                                                  VisualDensity.compact,
+                                              onChanged: (bool? val) async {
+                                                final newVal = val ?? false;
+                                                setDialogState(() {
+                                                  isPosDevice = newVal;
+                                                });
+                                                await controller
+                                                    .setIsPosDevice(newVal);
+                                              },
+                                            ),
+                                            const Flexible(
+                                              child: Text(
+                                                'Thiết bị POS',
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Color(0xFF0369A1),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+
+                                  // Đường vạch phân cách giữa 2 nút check
+                                  Container(
+                                    height: 24,
+                                    width: 1,
+                                    color: const Color(0xFFBAE6FD),
+                                  ),
+                                  const SizedBox(width: 4),
+
+                                  // Nút check: In POS
+                                  Expanded(
+                                    child: InkWell(
+                                      borderRadius: BorderRadius.circular(8),
+                                      onTap: () async {
+                                        final newVal = !isPrintPos;
+                                        setDialogState(() {
+                                          isPrintPos = newVal;
+                                        });
+                                        await controller.setIsPrintPos(newVal);
+                                      },
+                                      child: Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                            vertical: 4),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Checkbox(
+                                              value: isPrintPos,
+                                              activeColor:
+                                                  const Color(0xFF00A4E8),
+                                              visualDensity:
+                                                  VisualDensity.compact,
+                                              onChanged: (bool? val) async {
+                                                final newVal = val ?? false;
+                                                setDialogState(() {
+                                                  isPrintPos = newVal;
+                                                });
+                                                await controller
+                                                    .setIsPrintPos(newVal);
+                                              },
+                                            ),
+                                            const Flexible(
+                                              child: Text(
+                                                'In POS',
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  fontWeight: FontWeight.w600,
+                                                  color: Color(0xFF0369A1),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            )
+                          : CheckboxListTile(
+                              value: isPosDevice,
+                              onChanged: (bool? val) async {
+                                final newVal = val ?? false;
+                                setDialogState(() {
+                                  isPosDevice = newVal;
+                                });
+                                await controller.setIsPosDevice(newVal);
+                              },
+                              title: const Text(
+                                'Thiết bị POS',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w600,
+                                  color: Color(0xFF0369A1),
+                                ),
+                              ),
+                              subtitle: const Text(
+                                'Vùng quét thẻ và mũi tên chuyển lên phía trên',
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  color: Color(0xFF64748B),
+                                ),
+                              ),
+                              activeColor: const Color(0xFF00A4E8),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 0),
+                              visualDensity: VisualDensity.compact,
+                              controlAffinity: ListTileControlAffinity.leading,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
                     ),
 
                     const SizedBox(height: 20),
@@ -335,6 +448,7 @@ Future<void> showChangeDinhDanhDialog(
                                       );
 
                                       await controller.setIsPosDevice(isPosDevice);
+                                      await controller.setIsPrintPos(isPrintPos);
 
                                       if (dialogContext.mounted) {
                                         Navigator.of(dialogContext).pop();

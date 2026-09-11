@@ -7,6 +7,7 @@ import '../services/member_api_service.dart';
 import '../services/nfc_service.dart';
 import '../services/quan_service.dart';
 import '../services/sound_service.dart';
+import '../services/sunmi_printer_service.dart';
 
 /// Quản lý trạng thái trung tâm của toàn bộ Kiosk Workflow
 class AppController extends ChangeNotifier {
@@ -14,6 +15,7 @@ class AppController extends ChangeNotifier {
   final QuanService _quanService;
   final NfcService _nfcService;
   final MemberApiService _memberApiService;
+  final SunmiPrinterService _printerService;
 
   AppMode _mode = AppMode.splash;
   String? _currentUrl;
@@ -37,11 +39,13 @@ class AppController extends ChangeNotifier {
     QuanService? quanService,
     NfcService? nfcService,
     MemberApiService? memberApiService,
+    SunmiPrinterService? printerService,
     this.useNativeMemberScreen = true,
   })  : _soundService = soundService ?? SoundService(),
         _quanService = quanService ?? QuanService(),
         _nfcService = nfcService ?? NfcService(),
-        _memberApiService = memberApiService ?? MemberApiService();
+        _memberApiService = memberApiService ?? MemberApiService(),
+        _printerService = printerService ?? SunmiPrinterService();
 
   // Getters
   AppMode get mode => _mode;
@@ -53,13 +57,16 @@ class AppController extends ChangeNotifier {
   QuanService get quanService => _quanService;
   NfcService get nfcService => _nfcService;
   MemberApiService get memberApiService => _memberApiService;
+  SunmiPrinterService get printerService => _printerService;
   String? get currentMaQuan => _currentMaQuan;
   String? get currentTenQuan => _currentTenQuan;
   bool get isFinishSuccess => _isFinishSuccess;
   bool get isPosDevice => _isPosDevice;
+  bool get isPrintPos => _isPrintPos;
 
   bool _isDisposed = false;
-  bool _isPosDevice = false;
+  bool _isPosDevice = true;
+  bool _isPrintPos = false;
 
   NfcSupportStatus get nfcStatus => _nfcStatus;
   bool get isNfcSupported => _nfcStatus != NfcSupportStatus.notSupported;
@@ -168,9 +175,9 @@ class AppController extends ChangeNotifier {
         _isFinishSuccess = true;
         _unregisteredCard = null;
 
-        // 3. Phát đúng 1 tiếng BÍP thành công
-        debugPrint('[NFC/RFID] Phát tiếng BÍP thành công!');
-        await _soundService.playSuccessBeep();
+        // 3. Phát đúng 1 tiếng BÍP thành công (Nốt Sol)
+        debugPrint('[NFC/RFID] Phát tiếng BÍP quét thành công (Sol)!');
+        await _soundService.playScanSuccessBeep();
 
         // 4. Tắt phiên quét NFC khi chuyển sang màn hình làm việc
         await stopNfcScanning();
@@ -193,9 +200,9 @@ class AppController extends ChangeNotifier {
         _isFinishSuccess = true;
         _unregisteredCard = null;
 
-        // 3. Phát đúng 1 tiếng BÍP thành công
-        debugPrint('[NFC/RFID] Phát tiếng BÍP thành công!');
-        await _soundService.playSuccessBeep();
+        // 3. Phát đúng 1 tiếng BÍP thành công (Nốt Sol)
+        debugPrint('[NFC/RFID] Phát tiếng BÍP quét thành công (Sol)!');
+        await _soundService.playScanSuccessBeep();
 
         // 4. Tắt phiên quét NFC khi chuyển sang màn hình làm việc
         await stopNfcScanning();
@@ -257,9 +264,9 @@ class AppController extends ChangeNotifier {
         _isFinishSuccess = true;
         _unregisteredCard = null;
 
-        // Phát đúng 1 tiếng BÍP thành công
-        debugPrint('[NFC/RFID Reader] Phát tiếng BÍP thành công!');
-        await _soundService.playSuccessBeep();
+        // Phát đúng 1 tiếng BÍP thành công (Nốt Sol)
+        debugPrint('[NFC/RFID Reader] Phát tiếng BÍP quét thành công (Sol)!');
+        await _soundService.playScanSuccessBeep();
 
         // Tắt phiên quét NFC
         await stopNfcScanning();
@@ -282,9 +289,9 @@ class AppController extends ChangeNotifier {
         _isFinishSuccess = true;
         _unregisteredCard = null;
 
-        // Phát đúng 1 tiếng BÍP thành công
-        debugPrint('[NFC/RFID Reader] Phát tiếng BÍP thành công!');
-        await _soundService.playSuccessBeep();
+        // Phát đúng 1 tiếng BÍP thành công (Nốt Sol)
+        debugPrint('[NFC/RFID Reader] Phát tiếng BÍP quét thành công (Sol)!');
+        await _soundService.playScanSuccessBeep();
 
         // Tắt phiên quét NFC
         await stopNfcScanning();
@@ -364,9 +371,13 @@ class AppController extends ChangeNotifier {
     await startNfcScanning();
   }
 
-  /// Khởi tạo cấu hình POS device từ SharedPreferences (mặc định: false)
+  /// Khởi tạo cấu hình POS device & in POS từ SharedPreferences (mặc định: false)
   Future<void> initPosDevice() async {
     _isPosDevice = await _quanService.getStoredIsPosDevice();
+    _isPrintPos = await _quanService.getStoredIsPrintPos();
+    if (_isPosDevice && _isPrintPos) {
+      unawaited(_printerService.init());
+    }
     if (!_isDisposed) {
       notifyListeners();
     }
@@ -376,6 +387,21 @@ class AppController extends ChangeNotifier {
   Future<void> setIsPosDevice(bool value) async {
     _isPosDevice = value;
     await _quanService.saveIsPosDevice(value);
+    if (value && _isPrintPos) {
+      unawaited(_printerService.init());
+    }
+    if (!_isDisposed) {
+      notifyListeners();
+    }
+  }
+
+  /// Cập nhật cấu hình in trên POS và lưu vào SharedPreferences
+  Future<void> setIsPrintPos(bool value) async {
+    _isPrintPos = value;
+    await _quanService.saveIsPrintPos(value);
+    if (value && _isPosDevice) {
+      unawaited(_printerService.init());
+    }
     if (!_isDisposed) {
       notifyListeners();
     }

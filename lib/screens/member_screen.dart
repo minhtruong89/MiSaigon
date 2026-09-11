@@ -250,8 +250,8 @@ class _MemberScreenState extends State<MemberScreen>
       if (!mounted) return;
 
       if (result.isSuccess) {
-        // Thành công: phát tiếng bíp
-        await widget.controller.soundService.playSuccessBeep();
+        // Thành công: phát tiếng bíp xác nhận (Nốt Đô)
+        await widget.controller.soundService.playConfirmSuccessBeep();
 
         // Cập nhật số suất ăn còn lại trên giao diện nếu có
         if (result.suatConLai != null && _memberInfo != null) {
@@ -279,6 +279,18 @@ class _MemberScreenState extends State<MemberScreen>
           setState(() {
             _isCheckinSuccess = true;
           });
+        }
+
+        // Chỉ khi nào cả thiết bị POS và nút check In POS được chọn thì mới in phiếu
+        if (widget.controller.isPosDevice && widget.controller.isPrintPos) {
+          final memberName =
+              _memberInfo?.hoTen ?? result.hoTen ?? widget.maKhach;
+          unawaited(widget.controller.printerService.printMealConfirmation(
+            memberName: memberName,
+            maKhach: widget.maKhach,
+            tenQuan: widget.controller.currentTenQuan,
+            suatConLai: _memberInfo?.suatConLai,
+          ));
         }
 
         // Tự động quay về Standby sau 10 giây
