@@ -645,9 +645,9 @@ class _StandbyScreenState extends State<StandbyScreen>
 
                       const SizedBox(height: 4),
 
-                      // Mì Sài gòn 0đ
+                      // Mì Sài Gòn 0đ
                       const Text(
-                        'Mì Sài gòn 0đ',
+                        'Mì Sài Gòn 0đ',
                         textAlign: TextAlign.center,
                         style: TextStyle(
                           color: Color(0xFF00A4E8),

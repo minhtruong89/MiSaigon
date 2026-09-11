@@ -535,7 +535,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
                 // Mì Sài gòn 0đ
                 const Text(
-                  'Mì Sài gòn 0đ',
+                  'Mì Sài Gòn 0đ',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     color: Color(0xFF00A4E8),

@@ -46,6 +46,10 @@ class _MemberScreenState extends State<MemberScreen>
   bool _isCancelled = false;
   Timer? _cancelTimer;
 
+  // Trạng thái đã dùng hết suất ăn (suat_con_lai == 0)
+  bool _isOutOfMeals = false;
+  Timer? _outOfMealsTimer;
+
   late AnimationController _blinkController;
   Timer? _clockTimer;
   Timer? _idleTimeoutTimer;
@@ -75,6 +79,7 @@ class _MemberScreenState extends State<MemberScreen>
     _rateLimitTimer?.cancel();
     _successTimer?.cancel();
     _cancelTimer?.cancel();
+    _outOfMealsTimer?.cancel();
     super.dispose();
   }
 
@@ -142,9 +147,21 @@ class _MemberScreenState extends State<MemberScreen>
       );
 
       if (mounted) {
+        final isOutOfMeals = (info.suatConLai <= 0);
+        if (isOutOfMeals) {
+          _countdownTimer?.cancel();
+          _outOfMealsTimer?.cancel();
+          _outOfMealsTimer = Timer(const Duration(seconds: 10), () {
+            if (mounted) {
+              widget.controller.goToStandby();
+            }
+          });
+        }
+
         setState(() {
           _memberInfo = info;
           _isLoading = false;
+          _isOutOfMeals = isOutOfMeals;
         });
       }
     } on MemberApiException catch (e) {
@@ -213,7 +230,7 @@ class _MemberScreenState extends State<MemberScreen>
 
   /// Khi đếm ngược hoàn thành: Gọi API 3. Xác nhận suất ăn (POST /misaigon/checkin)
   Future<void> _performCheckin() async {
-    if (_isSubmittingCheckin) return;
+    if (_isSubmittingCheckin || _isOutOfMeals) return;
 
     // Chờ nếu _fetchMemberData vẫn đang tải
     if (_isLoading && _fetchMemberFuture != null) {
@@ -222,7 +239,12 @@ class _MemberScreenState extends State<MemberScreen>
       } catch (_) {}
     }
 
-    if (!mounted || _errorMessage != null) return;
+    if (!mounted ||
+        _errorMessage != null ||
+        _isOutOfMeals ||
+        (_memberInfo != null && _memberInfo!.suatConLai <= 0)) {
+      return;
+    }
 
     setState(() {
       _isSubmittingCheckin = true;
@@ -371,6 +393,7 @@ class _MemberScreenState extends State<MemberScreen>
   Future<void> _showMealHistoryDialog(BuildContext context) async {
     _successTimer?.cancel();
     _cancelTimer?.cancel();
+    _outOfMealsTimer?.cancel();
 
     await showDialog(
       context: context,
@@ -384,13 +407,18 @@ class _MemberScreenState extends State<MemberScreen>
       },
     );
 
-    // Sau khi đóng dialog, nếu đang ở màn hình hủy hoặc thành công thì hẹn giờ 10s về standby
-    if (mounted && (_isCancelled || _isCheckinSuccess)) {
-      _cancelTimer = Timer(const Duration(seconds: 10), () {
+    // Sau khi đóng dialog, nếu đang ở màn hình hủy, thành công hoặc hết suất thì hẹn giờ 10s về standby
+    if (mounted && (_isCancelled || _isCheckinSuccess || _isOutOfMeals)) {
+      final timer = Timer(const Duration(seconds: 10), () {
         if (mounted) {
           widget.controller.goToStandby();
         }
       });
+      if (_isOutOfMeals) {
+        _outOfMealsTimer = timer;
+      } else {
+        _cancelTimer = timer;
+      }
     }
   }
 
@@ -400,7 +428,7 @@ class _MemberScreenState extends State<MemberScreen>
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
         if (!didPop) {
-          if (!_isCancelled && !_isCheckinSuccess) {
+          if (!_isCancelled && !_isCheckinSuccess && !_isOutOfMeals) {
             _onCancelConfirmation();
           } else {
             widget.controller.goToStandby();
@@ -540,6 +568,11 @@ class _MemberScreenState extends State<MemberScreen>
         ? _memberInfo!.hoTen
         : 'Thành viên';
     final suatConLai = _memberInfo?.suatConLai ?? 0;
+
+    // GIAO DIỆN KHI ĐÃ DÙNG HẾT SUẤT ĂN (suatConLai == 0)
+    if (_isOutOfMeals) {
+      return _buildOutOfMealsContent(hoTen);
+    }
 
     // GIAO DIỆN KHI XÁC NHẬN SUẤT ĂN THÀNH CÔNG (THEO HÌNH MẪU ĐÍNH KÈM)
     if (_isCheckinSuccess) {
@@ -1064,6 +1097,130 @@ class _MemberScreenState extends State<MemberScreen>
                         ),
                       ),
                     ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 30),
+        ],
+      ),
+    );
+  }
+
+  /// GIAO DIỆN KHI ĐÃ DÙNG HẾT SUẤT ĂN (suatConLai == 0)
+  Widget _buildOutOfMealsContent(String hoTen) {
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          const SizedBox(height: 20),
+
+          // Lời chào "Xin chào bác"
+          const Align(
+            alignment: Alignment.centerLeft,
+            child: Padding(
+              padding: EdgeInsets.only(left: 40),
+              child: Text(
+                'Xin chào bác',
+                textAlign: TextAlign.left,
+                style: TextStyle(
+                  color: Color(0xFF00A4E8),
+                  fontSize: 28,
+                  fontStyle: FontStyle.italic,
+                  fontWeight: FontWeight.normal,
+                  letterSpacing: 0.5,
+                ),
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 14),
+
+          // Khung chữ nhật xanh chứa họ tên viết hoa in đậm
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 2),
+            color: const Color(0xFF00A4E8),
+            child: Text(
+              hoTen.toUpperCase(),
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 32,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 1.2,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 48),
+
+          // Câu thông báo: "Đã dùng hết suất ăn"
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+            child: Text(
+              'Đã dùng hết suất ăn trong tháng',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFFE50000),
+                fontSize: 40,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 48),
+
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20),
+            child: Text(
+              'Chúc một ngày tốt lành...',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: Color(0xFF00B050),
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                fontFamily: 'serif',
+                height: 1.35,
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 48),
+
+          // Nút viền xanh: "XEM LỊCH SỬ CÁC SUẤT ĂN"
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 22),
+            child: SizedBox(
+              width: double.infinity,
+              height: 100,
+              child: OutlinedButton(
+                onPressed: _onViewHistory,
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF00A4E8),
+                  backgroundColor: Colors.transparent,
+                  side: const BorderSide(
+                    color: Color(0xFF00A4E8),
+                    width: 2.8,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: const Text(
+                  'XEM LỊCH SỬ CÁC SUẤT ĂN',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.5,
                   ),
                 ),
               ),

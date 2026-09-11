@@ -24,7 +24,7 @@ void main() {
 
     expect(find.text('CHO THẺ VÔ KHE'), findsOneWidget);
     expect(find.text('CHƯƠNG TRÌNH TỪ THIỆN'), findsOneWidget);
-    expect(find.text('Mì Sài gòn 0đ'), findsOneWidget);
+    expect(find.text('Mì Sài Gòn 0đ'), findsOneWidget);
     expect(find.textContaining('34D Yersin'), findsOneWidget);
     expect(find.byType(ThinGearIcon), findsOneWidget);
   });
