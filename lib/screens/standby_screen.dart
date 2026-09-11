@@ -492,19 +492,36 @@ class _StandbyScreenState extends State<StandbyScreen>
               children: [
                 // 1. KHU VỰC PHÍA TRÊN: Hình ảnh mô tả đưa thẻ vào quét
                 Expanded(
-                  child: Center(
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
                     child: Padding(
-                      padding: const EdgeInsets.only(top: 16, bottom: 12, left: 20, right: 20),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Image.asset(
-                          'assets/images/sample_scan_card.jpg',
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) =>
-                              const Icon(
-                            Icons.contactless_rounded,
-                            size: 100,
-                            color: Color(0xFF00A4E8),
+                      padding: const EdgeInsets.only(bottom: 25, left: 20, right: 20),
+                      child: AnimatedBuilder(
+                        animation: _blinkController,
+                        builder: (context, child) {
+                          final isVisible = _blinkController.value < 0.8;
+                          return Opacity(
+                            opacity: isVisible ? 1.0 : 0.0,
+                            child: child,
+                          );
+                        },
+                        child: ConstrainedBox(
+                          constraints: const BoxConstraints(
+                            maxWidth: 320,
+                            maxHeight: 270,
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(16),
+                            child: Image.asset(
+                              'assets/images/sample_scan_card.jpg',
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const Icon(
+                                Icons.contactless_rounded,
+                                size: 80,
+                                color: Color(0xFF00A4E8),
+                              ),
+                            ),
                           ),
                         ),
                       ),
@@ -573,7 +590,7 @@ class _StandbyScreenState extends State<StandbyScreen>
 
                 // 3. KHU VỰC PHÍA DƯỚI: Sát phía cạnh dưới
                 Padding(
-                  padding: const EdgeInsets.only(top: 14, bottom: 10, left: 16, right: 16),
+                  padding: const EdgeInsets.only(top: 15, bottom: 10, left: 16, right: 16),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.center,
@@ -584,21 +601,17 @@ class _StandbyScreenState extends State<StandbyScreen>
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           // Logo Mì Sài Gòn 0vnđ
-                          Flexible(
-                            child: ConstrainedBox(
-                              constraints: const BoxConstraints(
-                                maxWidth: 175,
-                                maxHeight: 110,
-                              ),
-                              child: Image.asset(
-                                'assets/images/app_icon.png',
-                                fit: BoxFit.contain,
-                                errorBuilder: (context, error, stackTrace) =>
-                                    const SizedBox(height: 60),
-                              ),
+                          SizedBox(
+                            width: 165,
+                            height: 110,
+                            child: Image.asset(
+                              'assets/images/app_icon.png',
+                              fit: BoxFit.fill,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  const SizedBox(height: 60),
                             ),
                           ),
-                          const SizedBox(width: 14),
+                          const SizedBox(width: 12),
                           // Logo Quỹ Từ Thiện Bông Sen
                           Flexible(
                             child: ConstrainedBox(
@@ -607,7 +620,7 @@ class _StandbyScreenState extends State<StandbyScreen>
                                 maxHeight: 110,
                               ),
                               child: Image.asset(
-                                'assets/images/logo_qbs.png',
+                                'assets/images/logo_qbs_standby.png',
                                 fit: BoxFit.contain,
                                 errorBuilder: (context, error, stackTrace) =>
                                     const SizedBox(height: 60),
@@ -617,7 +630,7 @@ class _StandbyScreenState extends State<StandbyScreen>
                         ],
                       ),
 
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 20),
 
                       // Tiêu đề chương trình
                       const Text(
