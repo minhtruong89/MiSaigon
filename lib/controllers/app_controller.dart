@@ -3,6 +3,7 @@ import 'dart:developer' as developer;
 import 'package:flutter/foundation.dart';
 import '../models/app_mode.dart';
 import '../models/member_info.dart';
+import '../services/display_service.dart';
 import '../services/member_api_service.dart';
 import '../services/nfc_service.dart';
 import '../services/quan_service.dart';
@@ -182,6 +183,9 @@ class AppController extends ChangeNotifier {
         // 4. Tắt phiên quét NFC khi chuyển sang màn hình làm việc
         await stopNfcScanning();
 
+        // Đảm bảo màn hình sáng tối đa khi sang màn hình thành viên
+        unawaited(DisplayService.restoreBrightness());
+
         // 5. Chuyển sang MEMBER screen
         _mode = AppMode.member;
         notifyListeners();
@@ -206,6 +210,9 @@ class AppController extends ChangeNotifier {
 
         // 4. Tắt phiên quét NFC khi chuyển sang màn hình làm việc
         await stopNfcScanning();
+
+        // Đảm bảo màn hình sáng tối đa khi sang màn hình web làm việc
+        unawaited(DisplayService.restoreBrightness());
 
         // 5. Chuyển sang WORKING (WebView) hiển thị link_qr của thành viên
         _mode = AppMode.working;
@@ -271,6 +278,9 @@ class AppController extends ChangeNotifier {
         // Tắt phiên quét NFC
         await stopNfcScanning();
 
+        // Đảm bảo màn hình sáng tối đa khi sang màn hình thành viên
+        unawaited(DisplayService.restoreBrightness());
+
         // Chuyển sang MEMBER screen
         _mode = AppMode.member;
         notifyListeners();
@@ -295,6 +305,9 @@ class AppController extends ChangeNotifier {
 
         // Tắt phiên quét NFC
         await stopNfcScanning();
+
+        // Đảm bảo màn hình sáng tối đa khi sang màn hình web làm việc
+        unawaited(DisplayService.restoreBrightness());
 
         // Chuyển sang WORKING (WebView)
         _mode = AppMode.working;
@@ -368,6 +381,7 @@ class AppController extends ChangeNotifier {
   /// Quay lại STANDBY từ MemberScreen hoặc các màn hình khác
   Future<void> goToStandby() async {
     resetToStandby();
+    unawaited(DisplayService.restoreBrightness());
     await startNfcScanning();
   }
 

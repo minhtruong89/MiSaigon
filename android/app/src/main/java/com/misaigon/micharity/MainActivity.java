@@ -39,6 +39,7 @@ public class MainActivity extends FlutterActivity {
     private static final String CHANNEL_INSTALLER = "com.misaigon.micharity/installer";
     private static final String CHANNEL_AUDIO = "com.misaigon.micharity/audio";
     private static final String CHANNEL_NFC = "com.misaigon.micharity/nfc";
+    private static final String CHANNEL_DISPLAY = "com.misaigon.micharity/display";
 
     private short[] solSamples;
     private short[] doSamples;
@@ -203,6 +204,47 @@ public class MainActivity extends FlutterActivity {
                 }
             }
         });
+
+        // Display Channel (Screen brightness control for power saving)
+        new MethodChannel(flutterEngine.getDartExecutor().getBinaryMessenger(), CHANNEL_DISPLAY)
+            .setMethodCallHandler(new MethodChannel.MethodCallHandler() {
+                @Override
+                public void onMethodCall(@NonNull MethodCall call, @NonNull MethodChannel.Result result) {
+                    if (call.method.equals("setBrightness")) {
+                        Double brightness = call.argument("brightness");
+                        final float bValue = (brightness != null) ? brightness.floatValue() : 0.01f;
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    WindowManager.LayoutParams layout = getWindow().getAttributes();
+                                    layout.screenBrightness = Math.max(0.01f, Math.min(1.0f, bValue));
+                                    getWindow().setAttributes(layout);
+                                    result.success(true);
+                                } catch (Exception e) {
+                                    result.error("BRIGHTNESS_ERROR", e.getMessage(), null);
+                                }
+                            }
+                        });
+                    } else if (call.method.equals("restoreBrightness")) {
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                try {
+                                    WindowManager.LayoutParams layout = getWindow().getAttributes();
+                                    layout.screenBrightness = WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE;
+                                    getWindow().setAttributes(layout);
+                                    result.success(true);
+                                } catch (Exception e) {
+                                    result.error("BRIGHTNESS_ERROR", e.getMessage(), null);
+                                }
+                            }
+                        });
+                    } else {
+                        result.notImplemented();
+                    }
+                }
+            });
     }
 
     private void logToFlutter(String message) {

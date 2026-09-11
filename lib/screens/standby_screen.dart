@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../controllers/app_controller.dart';
 import '../models/app_mode.dart';
+import '../services/display_service.dart';
 import '../services/nfc_service.dart';
 import '../widgets/thin_gear_icon.dart';
 import '../widgets/dinh_danh_dialog.dart';
@@ -45,8 +46,64 @@ class _StandbyScreenState extends State<StandbyScreen>
   final TextEditingController _nfcTextController = TextEditingController();
   Timer? _nfcDebounceTimer;
 
+  // Quản lý trạng thái Dim màn hình tiết kiệm pin sau 60 giây không hoạt động
+  bool _isDimmed = false;
+  Timer? _dimTimer;
+  static const int dimTimeoutSeconds = 10;
+
   // Controller hiệu ứng chớp chu kỳ 1 giây (dương 8 âm 2: 800ms hiện, 200ms ẩn)
   late final AnimationController _blinkController;
+
+  void _startDimTimer() {
+    _dimTimer?.cancel();
+    if (!mounted) return;
+    if (_isDialogOpen ||
+        _isNfcDialogOpen ||
+        widget.controller.mode != AppMode.standby) {
+      return;
+    }
+    _dimTimer = Timer(const Duration(seconds: dimTimeoutSeconds), () {
+      if (mounted &&
+          widget.controller.mode == AppMode.standby &&
+          !_isDialogOpen &&
+          !_isNfcDialogOpen) {
+        _dimScreen();
+      }
+    });
+  }
+
+  void _resetDimTimer() {
+    if (_isDimmed) {
+      _wakeUp();
+    } else {
+      _startDimTimer();
+    }
+  }
+
+  void _cancelDimTimer() {
+    _dimTimer?.cancel();
+    _dimTimer = null;
+  }
+
+  void _dimScreen() {
+    if (_isDimmed) return;
+    setState(() {
+      _isDimmed = true;
+    });
+    DisplayService.dimScreen();
+  }
+
+  void _wakeUp() {
+    _cancelDimTimer();
+    final wasDimmed = _isDimmed;
+    if (wasDimmed) {
+      setState(() {
+        _isDimmed = false;
+      });
+    }
+    DisplayService.restoreBrightness();
+    _startDimTimer();
+  }
 
   @override
   void initState() {
@@ -54,6 +111,9 @@ class _StandbyScreenState extends State<StandbyScreen>
     WidgetsBinding.instance.addObserver(this);
     widget.controller.addListener(_onControllerChanged);
     HardwareKeyboard.instance.addHandler(_handleGlobalHardwareKey);
+
+    // Bắt đầu đếm thời gian 60s để dim màn hình tiết kiệm pin
+    _startDimTimer();
 
     // Chu kỳ 1 giây: 800ms sáng / hiện, 200ms tắt / ẩn
     _blinkController = AnimationController(
@@ -78,6 +138,13 @@ class _StandbyScreenState extends State<StandbyScreen>
 
   void _onControllerChanged() {
     if (!mounted) return;
+
+    // Đánh thức màn hình ngay lập tức nếu có tác động/quét thẻ
+    if (_isDimmed) {
+      _wakeUp();
+    } else {
+      _resetDimTimer();
+    }
 
     // Reset cờ khi NFC được bật lại để có thể nhắc tiếp nếu sau này người dùng lại tắt NFC
     if (widget.controller.isNfcEnabled) {
@@ -146,6 +213,8 @@ class _StandbyScreenState extends State<StandbyScreen>
     }
 
     if (event is KeyDownEvent) {
+      _resetDimTimer();
+
       // 1. Phím Enter hoặc Numpad Enter: Kết thúc chuỗi mã từ đầu đọc USB
       if (event.logicalKey == LogicalKeyboardKey.enter ||
           event.logicalKey == LogicalKeyboardKey.numpadEnter ||
@@ -197,6 +266,7 @@ class _StandbyScreenState extends State<StandbyScreen>
 
   Future<void> _checkMemberFromInput(String code) async {
     if (!mounted) return;
+    _wakeUp();
     _nfcTextController.clear();
     await widget.controller.processNfcInput(code);
   }
@@ -235,6 +305,7 @@ class _StandbyScreenState extends State<StandbyScreen>
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      _wakeUp();
       widget.controller.checkNfcStatus().then((_) {
         if (!mounted) return;
         if (widget.controller.nfcStatus == NfcSupportStatus.disabled &&
@@ -251,12 +322,16 @@ class _StandbyScreenState extends State<StandbyScreen>
         state == AppLifecycleState.inactive ||
         state == AppLifecycleState.detached ||
         state == AppLifecycleState.hidden) {
+      _cancelDimTimer();
+      DisplayService.restoreBrightness();
       widget.controller.stopNfcScanning();
     }
   }
 
   @override
   void dispose() {
+    _cancelDimTimer();
+    DisplayService.restoreBrightness();
     _nfcStatusPollingTimer?.cancel();
     _blinkController.dispose();
     HardwareKeyboard.instance.removeHandler(_handleGlobalHardwareKey);
@@ -272,6 +347,8 @@ class _StandbyScreenState extends State<StandbyScreen>
   Future<void> _showNfcEnableDialog() async {
     if (!mounted || _isNfcDialogOpen || _isDialogOpen) return;
     _isNfcDialogOpen = true;
+    _cancelDimTimer();
+    _wakeUp();
 
     try {
       await showDialog(
@@ -330,6 +407,7 @@ class _StandbyScreenState extends State<StandbyScreen>
       );
     } finally {
       _isNfcDialogOpen = false;
+      _startDimTimer();
     }
   }
 
@@ -346,11 +424,14 @@ class _StandbyScreenState extends State<StandbyScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: const Color(0xFFDEF0F9),
-      body: SafeArea(
-        child: Stack(
-          children: [
+    return Listener(
+      behavior: HitTestBehavior.translucent,
+      onPointerDown: (_) => _resetDimTimer(),
+      child: Scaffold(
+        backgroundColor: const Color(0xFFDEF0F9),
+        body: SafeArea(
+          child: Stack(
+            children: [
             Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -695,14 +776,61 @@ class _StandbyScreenState extends State<StandbyScreen>
                 },
               ),
             ),
+
+            // Lớp phủ tối tiết kiệm pin khi Dim màn hình sau 60 giây không hoạt động (độ trong suốt để vẫn nhìn thấy giao diện bên dưới)
+            if (_isDimmed && false)
+              Positioned.fill(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: _wakeUp,
+                  child: Container(
+                    color: Colors.black.withOpacity(0.55),
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                        margin: const EdgeInsets.symmetric(horizontal: 24),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.45),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white30, width: 1),
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: const [
+                            Icon(
+                              Icons.touch_app_rounded,
+                              color: Colors.white,
+                              size: 56,
+                            ),
+                            SizedBox(height: 12),
+                            Text(
+                              'Chạm vào màn hình hoặc đặt thẻ vào quét',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   /// Popup "Định danh cho Quán" dùng chung
   Future<void> _showChangeDinhDanhDialog(BuildContext context) async {
+    _cancelDimTimer();
+    _wakeUp();
     await showChangeDinhDanhDialog(
       context,
       widget.controller,
@@ -718,6 +846,7 @@ class _StandbyScreenState extends State<StandbyScreen>
             _isDialogOpen = false;
           });
           _syncNfcScanning();
+          _startDimTimer();
         }
       },
     );
