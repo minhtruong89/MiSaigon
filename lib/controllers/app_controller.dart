@@ -56,8 +56,10 @@ class AppController extends ChangeNotifier {
   String? get currentMaQuan => _currentMaQuan;
   String? get currentTenQuan => _currentTenQuan;
   bool get isFinishSuccess => _isFinishSuccess;
+  bool get isPosDevice => _isPosDevice;
 
   bool _isDisposed = false;
+  bool _isPosDevice = false;
 
   NfcSupportStatus get nfcStatus => _nfcStatus;
   bool get isNfcSupported => _nfcStatus != NfcSupportStatus.notSupported;
@@ -360,6 +362,23 @@ class AppController extends ChangeNotifier {
   Future<void> goToStandby() async {
     resetToStandby();
     await startNfcScanning();
+  }
+
+  /// Khởi tạo cấu hình POS device từ SharedPreferences (mặc định: false)
+  Future<void> initPosDevice() async {
+    _isPosDevice = await _quanService.getStoredIsPosDevice();
+    if (!_isDisposed) {
+      notifyListeners();
+    }
+  }
+
+  /// Cập nhật cấu hình POS device và lưu vào SharedPreferences
+  Future<void> setIsPosDevice(bool value) async {
+    _isPosDevice = value;
+    await _quanService.saveIsPosDevice(value);
+    if (!_isDisposed) {
+      notifyListeners();
+    }
   }
 
   void _cancelFinishTimer() {

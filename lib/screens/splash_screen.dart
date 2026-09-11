@@ -50,6 +50,9 @@ class _SplashScreenState extends State<SplashScreen> {
 
     final quanService = widget.controller.quanService;
 
+    // Khởi tạo cấu hình thiết bị POS từ SharedPreferences
+    await widget.controller.initPosDevice();
+
     // Kiểm tra trạng thái NFC ngay từ đầu để sẵn sàng chọn tab chính xác khi vào StandbyScreen
     await widget.controller.checkNfcStatus();
 

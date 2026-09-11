@@ -9,13 +9,25 @@ import '../widgets/thin_gear_icon.dart';
 import '../widgets/dinh_danh_dialog.dart';
 export '../widgets/thin_gear_icon.dart';
 
+/// ============================================================================
+/// CẤU HÌNH LOẠI THIẾT BỊ:
+/// - false: Máy Kiosk thông thường (khe cắm thẻ cạnh trái, "CHO THẺ VÔ KHE")
+/// - true: Máy POS (vùng quét & mũi tên ở trên cùng, "ĐẶT THẺ VÀO QUÉT")
+/// Được quản lý qua SharedPreferences và tùy chỉnh tại popup "Định danh cho Quán".
+/// ============================================================================
+const bool flagPosDevice = false;
+
 /// Màn hình STANDBY: Giao diện Kiosk nhận thẻ RFID / NFC theo thiết kế mới
 class StandbyScreen extends StatefulWidget {
   final AppController controller;
 
+  /// Cấu hình loại thiết bị (nếu null sẽ lấy theo controller.isPosDevice)
+  final bool? isPosDevice;
+
   const StandbyScreen({
     super.key,
     required this.controller,
+    this.isPosDevice,
   });
 
   @override
@@ -24,6 +36,7 @@ class StandbyScreen extends StatefulWidget {
 
 class _StandbyScreenState extends State<StandbyScreen>
     with WidgetsBindingObserver, SingleTickerProviderStateMixin {
+  bool get _isPos => widget.isPosDevice ?? widget.controller.isPosDevice;
   bool _isDialogOpen = false;
   bool _isNfcDialogOpen = false;
   bool _hasPromptedNfc = false;
@@ -342,56 +355,13 @@ class _StandbyScreenState extends State<StandbyScreen>
               children: [
                 // 1. KHU VỰC PHÍA TRÊN: Chiếm toàn bộ không gian còn lại ở trên
                 Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.only(top: 10, bottom: 10, right: 16),
-                    child: Stack(
-                      alignment: Alignment.center,
-                      children: [
-                        // Khe cắm thẻ màu đỏ sát mép trái (chớp chu kỳ 1s: 800ms hiện, 200ms ẩn)
-                        Positioned(
-                          left: 0,
-                          child: AnimatedBuilder(
-                            animation: _blinkController,
-                            builder: (context, child) {
-                              final isVisible = _blinkController.value < 0.8;
-                              return Opacity(
-                                opacity: isVisible ? 1.0 : 0.0,
-                                child: child,
-                              );
-                            },
-                            child: Container(
-                              width: 32,
-                              height: 350,
-                              decoration: BoxDecoration(
-                                color: const Color(0xFFE50000),
-                                borderRadius: const BorderRadius.only(
-                                  topRight: Radius.circular(22),
-                                  bottomRight: Radius.circular(22),
-                                ),
-                                border: Border.all(
-                                  color: const Color(0xFF990000),
-                                  width: 2.5,
-                                ),
-                                boxShadow: const [
-                                  BoxShadow(
-                                    color: Color(0x33E50000),
-                                    blurRadius: 10,
-                                    offset: Offset(3, 0),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                        ),
-
-                        // Cụm 2 mũi tên vàng trỏ trái & Logo Mì Sài Gòn 0vnđ
-                        Padding(
-                          padding: const EdgeInsets.only(left: 38),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                  child: _isPos
+                      ? Padding(
+                          padding: const EdgeInsets.only(top: 8, bottom: 8, left: 16, right: 16),
+                          child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              // 2 mũi tên vàng dày trỏ sang trái (chớp chu kỳ 1s: 800ms hiện, 200ms ẩn)
+                              // Thanh đỏ nằm ngang sát phía trên cùng màn hình
                               AnimatedBuilder(
                                 animation: _blinkController,
                                 builder: (context, child) {
@@ -401,17 +371,54 @@ class _StandbyScreenState extends State<StandbyScreen>
                                     child: child,
                                   );
                                 },
-                                child: Column(
+                                child: Container(
+                                  height: 28,
+                                  width: double.infinity,
+                                  margin: const EdgeInsets.symmetric(horizontal: 20),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFE50000),
+                                    borderRadius: const BorderRadius.only(
+                                      bottomLeft: Radius.circular(16),
+                                      bottomRight: Radius.circular(16),
+                                    ),
+                                    border: Border.all(
+                                      color: const Color(0xFF990000),
+                                      width: 2.5,
+                                    ),
+                                    boxShadow: const [
+                                      BoxShadow(
+                                        color: Color(0x33E50000),
+                                        blurRadius: 10,
+                                        offset: Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+
+                              const SizedBox(height: 12),
+
+                              // Cụm 2 mũi tên vàng nhấp nháy chĩa lên trên (chớp chu kỳ 1s: 800ms hiện, 200ms ẩn)
+                              AnimatedBuilder(
+                                animation: _blinkController,
+                                builder: (context, child) {
+                                  final isVisible = _blinkController.value < 0.8;
+                                  return Opacity(
+                                    opacity: isVisible ? 1.0 : 0.0,
+                                    child: child,
+                                  );
+                                },
+                                child: Row(
                                   mainAxisAlignment: MainAxisAlignment.center,
                                   children: const [
-                                    LeftBlockArrow(width: 48, height: 95),
-                                    SizedBox(height: 32),
-                                    LeftBlockArrow(width: 48, height: 95),
+                                    UpBlockArrow(width: 68, height: 46),
+                                    SizedBox(width: 28),
+                                    UpBlockArrow(width: 68, height: 46),
                                   ],
                                 ),
                               ),
 
-                              const SizedBox(width: 8),
+                              const SizedBox(height: 8),
 
                               // Logo Mì Sài Gòn 0vnđ
                               Expanded(
@@ -439,10 +446,108 @@ class _StandbyScreenState extends State<StandbyScreen>
                               ),
                             ],
                           ),
+                        )
+                      : Padding(
+                          padding: const EdgeInsets.only(top: 10, bottom: 10, right: 16),
+                          child: Stack(
+                            alignment: Alignment.center,
+                            children: [
+                              // Khe cắm thẻ màu đỏ sát mép trái (chớp chu kỳ 1s: 800ms hiện, 200ms ẩn)
+                              Positioned(
+                                left: 0,
+                                child: AnimatedBuilder(
+                                  animation: _blinkController,
+                                  builder: (context, child) {
+                                    final isVisible = _blinkController.value < 0.8;
+                                    return Opacity(
+                                      opacity: isVisible ? 1.0 : 0.0,
+                                      child: child,
+                                    );
+                                  },
+                                  child: Container(
+                                    width: 32,
+                                    height: 350,
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFE50000),
+                                      borderRadius: const BorderRadius.only(
+                                        topRight: Radius.circular(22),
+                                        bottomRight: Radius.circular(22),
+                                      ),
+                                      border: Border.all(
+                                        color: const Color(0xFF990000),
+                                        width: 2.5,
+                                      ),
+                                      boxShadow: const [
+                                        BoxShadow(
+                                          color: Color(0x33E50000),
+                                          blurRadius: 10,
+                                          offset: Offset(3, 0),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+
+                              // Cụm 2 mũi tên vàng trỏ trái & Logo Mì Sài Gòn 0vnđ
+                              Padding(
+                                padding: const EdgeInsets.only(left: 38),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    // 2 mũi tên vàng dày trỏ sang trái (chớp chu kỳ 1s: 800ms hiện, 200ms ẩn)
+                                    AnimatedBuilder(
+                                      animation: _blinkController,
+                                      builder: (context, child) {
+                                        final isVisible = _blinkController.value < 0.8;
+                                        return Opacity(
+                                          opacity: isVisible ? 1.0 : 0.0,
+                                          child: child,
+                                        );
+                                      },
+                                      child: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: const [
+                                          LeftBlockArrow(width: 48, height: 95),
+                                          SizedBox(height: 32),
+                                          LeftBlockArrow(width: 48, height: 95),
+                                        ],
+                                      ),
+                                    ),
+
+                                    const SizedBox(width: 8),
+
+                                    // Logo Mì Sài Gòn 0vnđ
+                                    Expanded(
+                                      child: Center(
+                                        child: ConstrainedBox(
+                                          constraints: const BoxConstraints(
+                                            maxWidth: 420,
+                                            maxHeight: 240,
+                                          ),
+                                          child: Transform.scale(
+                                            scaleX: 1.24,
+                                            scaleY: 1.0,
+                                            child: Image.asset(
+                                              'assets/images/app_icon.png',
+                                              fit: BoxFit.contain,
+                                              errorBuilder: (context, error, stackTrace) => const Icon(
+                                                Icons.restaurant_rounded,
+                                                size: 80,
+                                                color: Color(0xFF00A4E8),
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
                         ),
-                      ],
-                    ),
-                  ),
                 ),
 
                 // 2. KHU VỰC Ở GIỮA: Ngay sát phía trên khu vực phía dưới
@@ -466,25 +571,25 @@ class _StandbyScreenState extends State<StandbyScreen>
                             child: child,
                           );
                         },
-                        child: const Padding(
-                          padding: EdgeInsets.symmetric(horizontal: 16),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
                           child: FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Column(
                               mainAxisSize: MainAxisSize.min,
                               children: [
                                 Text(
-                                  'CHO THẺ VÔ KHE',
+                                  _isPos ? 'ĐẶT THẺ VÀO QUÉT' : 'CHO THẺ VÔ KHE',
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(
+                                  style: const TextStyle(
                                     color: Colors.white,
                                     fontSize: 24,
                                     fontWeight: FontWeight.w800,
                                     letterSpacing: 2.0,
                                   ),
                                 ),
-                                SizedBox(height: 6),
-                                Text(
+                                const SizedBox(height: 6),
+                                const Text(
                                   'XÁC NHẬN ĂN 1 SUẤT',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
@@ -575,7 +680,7 @@ class _StandbyScreenState extends State<StandbyScreen>
 
             // Icon bánh răng ở góc trên bên phải để mở trực tiếp popup "Định danh cho Quán"
             Positioned(
-              top: 10,
+              top: _isPos ? 45 : 10,
               right: 14,
               child: IconButton(
                 icon: const ThinGearIcon(
@@ -684,4 +789,72 @@ class _LeftBlockArrowPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
+/// Widget vẽ hình mũi tên vàng dạng khối dày trỏ lên trên
+class UpBlockArrow extends StatelessWidget {
+  final double width;
+  final double height;
+
+  const UpBlockArrow({
+    super.key,
+    this.width = 68,
+    this.height = 46,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return CustomPaint(
+      size: Size(width, height),
+      painter: _UpBlockArrowPainter(),
+    );
+  }
+}
+
+class _UpBlockArrowPainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final w = size.width;
+    final h = size.height;
+
+    // Đầu mũi tên chiếm khoảng 52% chiều cao
+    final headH = h * 0.52;
+    // Thân mũi tên ở giữa
+    final stemLeft = w * 0.28;
+    final stemRight = w * 0.72;
+
+    final path = Path()
+      ..moveTo(w / 2, 0) // Đỉnh nhọn trỏ lên trên
+      ..lineTo(w, headH) // Cạnh phải đầu mũi tên
+      ..lineTo(stemRight, headH) // Cạnh ngang nối vào thân
+      ..lineTo(stemRight, h) // Cạnh phải thân mũi tên xuống đáy
+      ..lineTo(stemLeft, h) // Đáy thân mũi tên
+      ..lineTo(stemLeft, headH) // Cạnh trái thân mũi tên lên đầu
+      ..lineTo(0, headH) // Cạnh ngang ra đầu mũi tên bên trái
+      ..close();
+
+    // 1. Đổ bóng nhẹ
+    final shadowPaint = Paint()
+      ..color = const Color(0x33000000)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 2);
+    canvas.drawPath(path.shift(const Offset(1, 1.5)), shadowPaint);
+
+    // 2. Tô màu vàng tươi
+    final fillPaint = Paint()
+      ..color = const Color(0xFFFFDE00)
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(path, fillPaint);
+
+    // 3. Viền màu cam nổi bật
+    final strokePaint = Paint()
+      ..color = const Color(0xFFE65100)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.4
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawPath(path, strokePaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 

@@ -17,6 +17,7 @@ Future<void> showChangeDinhDanhDialog(
   bool obscurePassword = true;
   String? dialogError;
   bool isChecking = false;
+  bool isPosDevice = controller.isPosDevice;
 
   await showDialog(
     context: context,
@@ -216,6 +217,50 @@ Future<void> showChangeDinhDanhDialog(
                       ),
                     ),
 
+                    const SizedBox(height: 12),
+
+                    // Cụm cấu hình Thiết bị POS
+                    Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFF0F9FF),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: const Color(0xFFBAE6FD)),
+                      ),
+                      child: CheckboxListTile(
+                        value: isPosDevice,
+                        onChanged: (bool? val) async {
+                          final newVal = val ?? false;
+                          setDialogState(() {
+                            isPosDevice = newVal;
+                          });
+                          await controller.setIsPosDevice(newVal);
+                        },
+                        title: const Text(
+                          'Thiết bị POS',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: Color(0xFF0369A1),
+                          ),
+                        ),
+                        subtitle: const Text(
+                          'Vùng quét thẻ và mũi tên chuyển lên phía trên',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFF64748B),
+                          ),
+                        ),
+                        activeColor: const Color(0xFF00A4E8),
+                        contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 0),
+                        visualDensity: VisualDensity.compact,
+                        controlAffinity: ListTileControlAffinity.leading,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
+
                     const SizedBox(height: 20),
 
                     // Hàng 2 nút: Hủy & Xác nhận
@@ -288,6 +333,8 @@ Future<void> showChangeDinhDanhDialog(
                                         password: password,
                                         tenQuan: tenQuan,
                                       );
+
+                                      await controller.setIsPosDevice(isPosDevice);
 
                                       if (dialogContext.mounted) {
                                         Navigator.of(dialogContext).pop();

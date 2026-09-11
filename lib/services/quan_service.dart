@@ -14,6 +14,7 @@ class QuanService {
   static const String keyPassword = 'password';
   static const String keyTenQuan = 'ten_quan';
   static const String keyCachedJson = 'cached_quan_info_json';
+  static const String keyIsPosDevice = 'is_pos_device';
 
   final http.Client _httpClient;
 
@@ -188,6 +189,28 @@ class QuanService {
       return true;
     } catch (e) {
       developer.log('Lỗi lưu credentials: $e', name: 'QuanService');
+      return false;
+    }
+  }
+
+  /// Lấy cấu hình thiết bị POS đã lưu trong SharedPreferences (mặc định: false)
+  Future<bool> getStoredIsPosDevice() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getBool(keyIsPosDevice) ?? false;
+    } catch (e) {
+      developer.log('Lỗi đọc is_pos_device: $e', name: 'QuanService');
+      return false;
+    }
+  }
+
+  /// Lưu cấu hình thiết bị POS vào SharedPreferences
+  Future<bool> saveIsPosDevice(bool isPos) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return await prefs.setBool(keyIsPosDevice, isPos);
+    } catch (e) {
+      developer.log('Lỗi lưu is_pos_device: $e', name: 'QuanService');
       return false;
     }
   }

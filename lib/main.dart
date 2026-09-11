@@ -24,6 +24,7 @@ void main() async {
   // 3. Khởi tạo AppController
   final appController = AppController();
   await appController.soundService.init();
+  await appController.initPosDevice();
 
   runApp(MiCharityApp(controller: appController));
 }
