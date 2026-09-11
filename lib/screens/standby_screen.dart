@@ -49,7 +49,7 @@ class _StandbyScreenState extends State<StandbyScreen>
   // Quản lý trạng thái Dim màn hình tiết kiệm pin sau 60 giây không hoạt động
   bool _isDimmed = false;
   Timer? _dimTimer;
-  static const int dimTimeoutSeconds = 10;
+  static const int dimTimeoutSeconds = 60;
 
   // Controller hiệu ứng chớp chu kỳ 1 giây (dương 8 âm 2: 800ms hiện, 200ms ẩn)
   late final AnimationController _blinkController;
