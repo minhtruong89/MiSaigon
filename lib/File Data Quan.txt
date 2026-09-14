@@ -1,15 +1,15 @@
-Mã quán(không dấu, viết liền)	Tên quán + Địa chỉ	Password
-		
-SG34DY	 34D Yersin, P. Nguyễn Thái Bình TPHCM	ys
-SG24VH	24 Vĩnh Hội, P. Vĩnh Hội, TP.HCM	vh
-NT73DT	73 Đặng Tất, Nha Trang	dt
-NT52HTT	52 Hai Tháng Tư, Nha Trang	htt
-GL91DTH	91 Đinh Tiên Hoàng, Gia Lai	dth
-GL85PDG	85 Phan Đình Giót, Gia Lai	pdg
-GL00NVX	Bờ kè Nguyễn Viết Xuân, Gia Lai	nvx
-TVTNNC4	Tác viên Tuyền Nguyễn - NC4	tnnc4
-TVHDNT	Tác viên Hương Đặng - QYV Nha Trang	hdnt
-TVBTNT	Tác viên Bảo Trâm - QYV Nha Trang	btnt
-TVNHGL	Tác viên Ngọc Hân - Gia Lai	nhgl
-TVMNGL	Tác viên Minh Ngọc - Gia Lai	mngl
-SG324PTH	324 Phạm Thế Hiển, TPHCM	pth
+Mã quán(không dấu, viết liền)	Tên quán + Địa chỉ	Link URL	Password
+			
+SG34DY	 34D Yersin, P. Nguyễn Thái Bình TPHCM	https://dtri2206.github.io/freemeals-website/?location=SG34DY	ys
+SG24VH	24 Vĩnh Hội, P. Vĩnh Hội, TP.HCM	https://dtri2206.github.io/freemeals-website/?location=SG24VH	vh
+NT73DT	73 Đặng Tất, Nha Trang	https://dtri2206.github.io/freemeals-website/?location=NT73DT	dt
+NT52HTT	52 Hai Tháng Tư, Nha Trang	https://dtri2206.github.io/freemeals-website/?location=NT52HTT	htt
+GL91DTH	91 Đinh Tiên Hoàng, Gia Lai	https://dtri2206.github.io/freemeals-website/?location=GL91DTH	dth
+GL85PDG	85 Phan Đình Giót, Gia Lai	https://dtri2206.github.io/freemeals-website/?location=GL85PDG	pdg
+GL00NVX	Bờ kè Nguyễn Viết Xuân, Gia Lai	https://dtri2206.github.io/freemeals-website/?location=GL00NVX	nvx
+TVTNNC4	Tác viên Tuyền Nguyễn - NC4	https://dtri2206.github.io/freemeals-website/?location=TVTNNC4	tnnc4
+TVHDNT	Tác viên Hương Đặng - QYV Nha Trang	https://dtri2206.github.io/freemeals-website/?location=TVHDNT	hdnt
+TVBTNT	Tác viên Bảo Trâm - QYV Nha Trang	https://dtri2206.github.io/freemeals-website/?location=TVBTNT	btnt
+TVNHGL	Tác viên Ngọc Hân - Gia Lai	https://dtri2206.github.io/freemeals-website/?location=TVNHGL	nhgl
+TVMNGL	Tác viên Minh Ngọc - Gia Lai	https://dtri2206.github.io/freemeals-website/?location=TVMNGL	mngl
+SG324PTH	324 Phạm Thế Hiển, TPHCM	https://dtri2206.github.io/freemeals-website/?location=SG324PTH	pth

@@ -8,6 +8,8 @@ Lấy 3 trường: ma_quan, ten_quan, password
 import os
 import sys
 import json
+import re
+import csv
 import shutil
 from pathlib import Path
 
@@ -76,20 +78,35 @@ def sync_locations(
     else:
         delimiter = "\t"
 
-    header_tokens = [h.strip() for h in first_line.split(delimiter)]
+    # Dùng csv.reader để xử lý chuẩn xác cấu trúc cột và ký tự đặc biệt
+    reader = csv.reader(lines, delimiter=delimiter)
+    all_rows = [row for row in reader if any(cell.strip() for cell in row)]
+    if not all_rows:
+        print("[-] File quán rỗng hoặc không đọc được!")
+        return False
 
-    col_ma = 0
-    col_ten = 1
-    col_pass = 2
+    header_tokens = [h.strip() for h in all_rows[0]]
+
+    col_ma = -1
+    col_ten = -1
+    col_pass = -1
 
     for idx, h in enumerate(header_tokens):
         h_clean = h.lower().replace("_", " ").strip()
         if "mã" in h_clean or "ma" in h_clean:
             col_ma = idx
-        elif "tên" in h_clean or "ten" in h_clean or "địa chỉ" in h_clean or "dia chi" in h_clean:
-            col_ten = idx
         elif "pass" in h_clean or "mật khẩu" in h_clean or "mat khau" in h_clean:
             col_pass = idx
+        elif any(k in h_clean for k in ["tên", "ten", "địa chỉ", "dia chi", "quán", "quan"]):
+            col_ten = idx
+
+    # Fallback nếu không khớp tên tiêu đề
+    if col_ma == -1:
+        col_ma = 0
+    if col_ten == -1:
+        col_ten = 1
+    if col_pass == -1:
+        col_pass = len(header_tokens) - 1
 
     print(f"    - Cột Mã quán:  index {col_ma} ('{header_tokens[col_ma] if col_ma < len(header_tokens) else ''}')")
     print(f"    - Cột Tên quán: index {col_ten} ('{header_tokens[col_ten] if col_ten < len(header_tokens) else ''}')")
@@ -97,8 +114,8 @@ def sync_locations(
 
     # Trích xuất dữ liệu locations
     new_locations = []
-    for line_idx, line in enumerate(lines[1:], start=2):
-        tokens = [t.strip() for t in line.split(delimiter)]
+    for line_idx, raw_tokens in enumerate(all_rows[1:], start=2):
+        tokens = [t.strip() for t in raw_tokens]
         
         # Bỏ qua dòng không đủ cột hoặc không có mã quán
         if col_ma >= len(tokens):
@@ -108,8 +125,8 @@ def sync_locations(
         if not ma_quan:
             continue
 
-        ten_quan = tokens[col_ten] if col_ten < len(tokens) else ""
-        password = tokens[col_pass] if col_pass < len(tokens) else ""
+        ten_quan = tokens[col_ten] if (col_ten != -1 and col_ten < len(tokens)) else ""
+        password = tokens[col_pass] if (col_pass != -1 and col_pass < len(tokens)) else ""
 
         new_locations.append({
             "ma_quan": ma_quan,
@@ -144,17 +161,16 @@ def sync_locations(
     data["locations"] = new_locations
 
     # Format JSON đẹp mắt
-    import re
     json_text = json.dumps(data, indent=2, ensure_ascii=False)
 
-    # Giữ định dạng mảng ma_nfc gọn gàng nếu có
+    # Giữ định dạng mảng ma_nfc gọn gàng nếu có: [ "...", "..."]
     def _format_nfc_inline(m):
         prefix = m.group(1)
         body = m.group(2)
         items = re.findall(r'"[^"]*"', body)
         if not items:
             return f"{prefix}[]"
-        return f'{prefix}[ ' + ", ".join(items) + " ]"
+        return f'{prefix}[ ' + ", ".join(items) + "]"
 
     json_text = re.sub(r'("ma_nfc":\s*)\[([\s\S]*?)\]', _format_nfc_inline, json_text)
 

@@ -1,0 +1,30 @@
+Base URL:
+https://dqgjnqeqwsijnsphpzqt.supabase.co/functions/v1/misaigon
+Header bắt buộc cho mọi request:
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxZ2pucWVxd3Npam5zcGhwenF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5MjUzNTEsImV4cCI6MjEwMzUwMTM1MX0.eJpR_qUIGLfZHylI5yoIngAtUr0qYpKLpHH9oKPIhZ4
+Content-Type: application/json
+1. Lấy thông tin thẻ thành viên
+POST /misaigon/memberInfo
+Gửi: { "ma_kh": "kh_0005" }
+Nhận: { "result": "success", "ma_kh": "kh_0005", "ho_ten": "Nguyễn Văn Tài", "so_dien_thoai": "0973112209", "suat_duoc_cap": 80, "suat_con_lai": 71, "qr_link": "https://dtri2206.github.io/freemeals-website/quet.html?kh=kh_0005" }
+Nếu sai mã: { "result": "error", "code": "member_not_found", "message": "Không tìm thấy mã khách này." }
+2. Lịch sử ăn của thành viên
+POST /misaigon/mealHistory
+Gửi: { "ma_kh": "kh_0005" }
+Nhận: { "result": "success", "ma_kh": "kh_0005", "lich_su": [ { "thoi_gian": "15:07:59 04/09/2026", "ten_quan": "73 Đặng Tất, Nha Trang", "so_suat": 1 } ] }
+(Không có lịch sử thì lich_su là mảng rỗng, không phải lỗi.)
+3. Xác nhận suất ăn
+POST /misaigon/checkin
+Gửi: { "ma_kh": "kh_0005", "mat_khau_quan": "nvx", "so_suat": 1 }
+so_suat không bắt buộc, bỏ trống thì mặc định 1 suất.
+Không cần gửi mã quán ăn — hệ thống tự nhận ra quán qua đúng mật khẩu nhập vào.
+Nhận (thành công): { "result": "success", "ma_kh": "kh_0005", "ho_ten": "Nguyễn Văn Tài", "ten_quan": "73 Đặng Tất, Nha Trang", "so_suat": 1, "suat_con_lai": 70 }
+Các mã lỗi có thể gặp (field "code" khi result = "error"):
+bad_request: thiếu ma_kh hoặc mat_khau_quan
+invalid_password: sai mật khẩu quán
+member_not_found: mã khách không tồn tại
+quota_exceeded: khách đã dùng hết suất tháng này
+location_limit_exceeded: quán đã bán hết hạn mức tháng này
+rate_limited: nhập sai mật khẩu quá 8 lần/5 phút, tạm khoá chống dò mật khẩu — nếu gặp thì nên disable nút bấm trong lúc chờ, tránh bấm dồn dập gây khoá nhầm
+bad_portions: so_suat không phải 1 hoặc 2
+App chỉ cần hiển thị thẳng field "message" khi có lỗi (đã viết sẵn bằng tiếng Việt), không cần tự validate gì thêm — mọi luật đều nằm ở server.
