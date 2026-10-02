@@ -104,6 +104,35 @@ class SoundService {
     }
   }
 
+  /// Phát âm thanh Tít Tít Tít báo lỗi (khi hết suất ăn trong tháng)
+  Future<void> playErrorBeep() async {
+    // 1. Phản hồi rung haptic cảnh báo
+    try {
+      await HapticFeedback.heavyImpact();
+    } catch (_) {}
+
+    // 2. Gọi Native Audio (Kích hoạt rung 3 nhịp + AudioTrack 3 tiếng bíp 880Hz)
+    try {
+      await _nativeAudioChannel.invokeMethod<bool>('playErrorBeep');
+    } catch (e) {
+      developer.log('Native error beep error: $e', name: 'SoundService');
+    }
+
+    // 3. Dự phòng song song SystemSound
+    try {
+      await SystemSound.play(SystemSoundType.alert);
+    } catch (_) {}
+
+    // 4. Dự phòng AudioPlayer với file error_beep.wav
+    try {
+      await init();
+      await _player.stop();
+      await _player.play(AssetSource('audio/error_beep.wav'), volume: 1.0);
+    } catch (e) {
+      developer.log('AudioPlayer error: $e', name: 'SoundService');
+    }
+  }
+
   /// Tương thích ngược: mặc định phát tiếng scan beep
   Future<void> playSuccessBeep() => playScanSuccessBeep();
 

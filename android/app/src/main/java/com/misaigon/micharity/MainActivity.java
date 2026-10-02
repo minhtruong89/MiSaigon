@@ -44,6 +44,7 @@ public class MainActivity extends FlutterActivity {
 
     private short[] solSamples;
     private short[] doSamples;
+    private short[] errorSamples;
     private MethodChannel nfcChannel;
     private NfcAdapter nfcAdapter;
     private boolean isNfcScanning = false;
@@ -140,6 +141,11 @@ public class MainActivity extends FlutterActivity {
                         // Nốt Đô (C4: 261Hz) khi Xác nhận thành công
                         triggerNativeVibration(180);
                         playNativeDoBeep();
+                        result.success(true);
+                    } else if (call.method.equals("playErrorBeep")) {
+                        // Tiếng tít tít tít báo lỗi (hết suất ăn)
+                        triggerErrorVibration();
+                        playNativeErrorBeep();
                         result.success(true);
                     } else if (call.method.equals("vibrate")) {
                         triggerNativeVibration(150);
@@ -568,6 +574,37 @@ public class MainActivity extends FlutterActivity {
                 doSamples[i] = (short) (wave * 32767 * envelope * 0.9);
             }
 
+            // 3. Tiếng tít tít tít báo lỗi (3 tiếng bíp 880Hz: 80ms kêu - 70ms nghỉ - 80ms kêu - 70ms nghỉ - 80ms kêu = 380ms)
+            int beepLen = sampleRate * 80 / 1000;
+            int silenceLen = sampleRate * 70 / 1000;
+            int totalErrorSamples = beepLen * 3 + silenceLen * 2;
+            errorSamples = new short[totalErrorSamples];
+            double errFreq = 880.0;
+            int errAttack = sampleRate * 8 / 1000;
+            int errDecay = sampleRate * 12 / 1000;
+            int errSustainEnd = beepLen - errDecay;
+
+            int cur = 0;
+            for (int b = 0; b < 3; b++) {
+                for (int i = 0; i < beepLen; i++) {
+                    double t = (double) i / sampleRate;
+                    double envelope = 1.0;
+                    if (i < errAttack) {
+                        envelope = (double) i / errAttack;
+                    } else if (i > errSustainEnd) {
+                        envelope = (double) (beepLen - i) / errDecay;
+                    }
+                    double wave = Math.sin(2 * Math.PI * errFreq * t) * 0.65 +
+                                  Math.sin(2 * Math.PI * (errFreq * 2) * t) * 0.35;
+                    errorSamples[cur++] = (short) (wave * 32767 * envelope * 0.95);
+                }
+                if (b < 2) {
+                    for (int i = 0; i < silenceLen; i++) {
+                        errorSamples[cur++] = 0;
+                    }
+                }
+            }
+
         } catch (Exception ignored) {}
     }
 
@@ -579,6 +616,20 @@ public class MainActivity extends FlutterActivity {
                     v.vibrate(VibrationEffect.createOneShot(durationMs, VibrationEffect.DEFAULT_AMPLITUDE));
                 } else {
                     v.vibrate(durationMs);
+                }
+            }
+        } catch (Exception ignored) {}
+    }
+
+    private void triggerErrorVibration() {
+        try {
+            Vibrator v = (Vibrator) getSystemService(Context.VIBRATOR_SERVICE);
+            if (v != null && v.hasVibrator()) {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    long[] timings = new long[]{0, 80, 70, 80, 70, 80};
+                    v.vibrate(VibrationEffect.createWaveform(timings, -1));
+                } else {
+                    v.vibrate(new long[]{0, 80, 70, 80, 70, 80}, -1);
                 }
             }
         } catch (Exception ignored) {}
@@ -596,6 +647,13 @@ public class MainActivity extends FlutterActivity {
             initBeepSamples();
         }
         playPcmTrack(doSamples, 400);
+    }
+
+    private void playNativeErrorBeep() {
+        if (errorSamples == null) {
+            initBeepSamples();
+        }
+        playPcmTrack(errorSamples, 450);
     }
 
     private void playPcmTrack(final short[] pcm, int releaseDelayMs) {

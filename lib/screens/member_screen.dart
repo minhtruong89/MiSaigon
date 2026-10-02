@@ -156,6 +156,7 @@ class _MemberScreenState extends State<MemberScreen>
               widget.controller.goToStandby();
             }
           });
+          unawaited(widget.controller.soundService.playErrorBeep());
         }
 
         setState(() {
@@ -324,6 +325,24 @@ class _MemberScreenState extends State<MemberScreen>
         });
       } else {
         // Lỗi nghiệp vụ từ server
+        if (result.code == 'quota_exceeded') {
+          _countdownTimer?.cancel();
+          _outOfMealsTimer?.cancel();
+          _outOfMealsTimer = Timer(const Duration(seconds: 10), () {
+            if (mounted) {
+              widget.controller.goToStandby();
+            }
+          });
+          unawaited(widget.controller.soundService.playErrorBeep());
+          if (mounted) {
+            setState(() {
+              _isOutOfMeals = true;
+              _isSubmittingCheckin = false;
+            });
+          }
+          return;
+        }
+
         if (result.code == 'rate_limited') {
           setState(() {
             _isRateLimited = true;
