@@ -36,6 +36,7 @@ class _SplashScreenState extends State<SplashScreen> {
   bool _obscurePassword = true;
   String? _dialogError;
   bool _isCheckingCreds = false;
+  bool _isUpdatingQuanInfo = false;
 
   @override
   void initState() {
@@ -61,6 +62,18 @@ class _SplashScreenState extends State<SplashScreen> {
       _statusText = 'Đang đồng bộ dữ liệu quán...';
     });
     _quanInfo = await quanService.fetchQuanInfo();
+
+    if (_quanInfo != null) {
+      final locationCount = (_quanInfo!['locations'] as List?)?.length ?? 0;
+      final memberCount = (_quanInfo!['members'] as List?)?.length ?? 0;
+      debugPrint('========================================');
+      debugPrint('[QUAN_INFO] Đã nạp dữ liệu quan_info.json:');
+      debugPrint('[QUAN_INFO] - Tổng số location: $locationCount');
+      debugPrint('[QUAN_INFO] - Tổng số member: $memberCount');
+      debugPrint('========================================');
+    } else {
+      debugPrint('[QUAN_INFO] Không tìm thấy dữ liệu quan_info.json');
+    }
 
     // 2. TÁC VỤ 1 (CHO ANDROID): KIỂM TRA BẢN CẬP NHẬT APP MỚI
     if (Platform.isAndroid && _quanInfo != null) {
@@ -185,6 +198,11 @@ class _SplashScreenState extends State<SplashScreen> {
       builder: (context) {
         return StatefulBuilder(
           builder: (context, setDialogState) {
+            final locationCount =
+                (_quanInfo?['locations'] as List?)?.length ?? 0;
+            final memberCount =
+                (_quanInfo?['members'] as List?)?.length ?? 0;
+
             return AlertDialog(
               backgroundColor: Colors.white,
               shape: RoundedRectangleBorder(
@@ -230,7 +248,74 @@ class _SplashScreenState extends State<SplashScreen> {
                         height: 1.4,
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Số lượng quán: $locationCount • Thành viên: $memberCount',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF00A4E8),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          height: 30,
+                          child: ElevatedButton.icon(
+                            onPressed: _isUpdatingQuanInfo
+                                ? null
+                                : () async {
+                                    setDialogState(() {
+                                      _isUpdatingQuanInfo = true;
+                                      _dialogError = null;
+                                    });
+                                    final updatedInfo = await widget
+                                        .controller.quanService
+                                        .fetchQuanInfo();
+                                    if (!mounted) return;
+                                    setDialogState(() {
+                                      _isUpdatingQuanInfo = false;
+                                      if (updatedInfo != null) {
+                                        _quanInfo = updatedInfo;
+                                      }
+                                    });
+                                  },
+                            icon: _isUpdatingQuanInfo
+                                ? const SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(Icons.sync_rounded, size: 15),
+                            label: Text(
+                              _isUpdatingQuanInfo ? 'Đang tải...' : 'Cập nhật',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF00A4E8),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 0),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
 
                     // Dòng 1: Mã định danh
                     TextField(

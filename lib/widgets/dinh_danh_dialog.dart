@@ -17,8 +17,18 @@ Future<void> showChangeDinhDanhDialog(
   bool obscurePassword = true;
   String? dialogError;
   bool isChecking = false;
+  bool isUpdatingData = false;
   bool isPosDevice = controller.isPosDevice;
   bool isPrintPos = controller.isPrintPos;
+
+  final cachedInfo = await controller.quanService.getCachedQuanInfo();
+  int locationCount = (cachedInfo?['locations'] as List?)?.length ?? 0;
+  int memberCount = (cachedInfo?['members'] as List?)?.length ?? 0;
+
+  if (!context.mounted) {
+    onClose?.call();
+    return;
+  }
 
   await showDialog(
     context: context,
@@ -79,7 +89,81 @@ Future<void> showChangeDinhDanhDialog(
                         height: 1.4,
                       ),
                     ),
-                    const SizedBox(height: 18),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            'Số lượng quán: $locationCount • Thành viên: $memberCount',
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF00A4E8),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        SizedBox(
+                          height: 30,
+                          child: ElevatedButton.icon(
+                            onPressed: isUpdatingData
+                                ? null
+                                : () async {
+                                    setDialogState(() {
+                                      isUpdatingData = true;
+                                      dialogError = null;
+                                    });
+                                    final updatedInfo = await controller
+                                        .quanService
+                                        .fetchQuanInfo();
+                                    if (!dialogContext.mounted) return;
+                                    setDialogState(() {
+                                      isUpdatingData = false;
+                                      if (updatedInfo != null) {
+                                        locationCount =
+                                            (updatedInfo['locations'] as List?)
+                                                    ?.length ??
+                                                0;
+                                        memberCount =
+                                            (updatedInfo['members'] as List?)
+                                                    ?.length ??
+                                                0;
+                                      }
+                                    });
+                                  },
+                            icon: isUpdatingData
+                                ? const SizedBox(
+                                    width: 14,
+                                    height: 14,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Icon(Icons.sync_rounded, size: 15),
+                            label: Text(
+                              isUpdatingData ? 'Đang tải...' : 'Cập nhật',
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF00A4E8),
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 10, vertical: 0),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
 
                     // Dòng 1: Mã định danh
                     TextField(
@@ -430,6 +514,16 @@ Future<void> showChangeDinhDanhDialog(
                                     final quanInfo = await controller
                                         .quanService
                                         .fetchQuanInfo();
+                                    if (quanInfo != null) {
+                                      locationCount =
+                                          (quanInfo['locations'] as List?)
+                                                  ?.length ??
+                                              0;
+                                      memberCount =
+                                          (quanInfo['members'] as List?)
+                                                  ?.length ??
+                                              0;
+                                    }
                                     final matchingLocation = controller
                                         .quanService
                                         .findMatchingLocation(

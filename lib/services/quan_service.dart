@@ -26,9 +26,14 @@ class QuanService {
   Future<Map<String, dynamic>?> fetchQuanInfo() async {
     try {
       debugPrint('[QUAN_SERVICE] -> GET $quanInfoUrl');
-      final response = await _httpClient
-          .get(Uri.parse(quanInfoUrl))
-          .timeout(const Duration(seconds: 10));
+      final response = await _httpClient.get(
+        Uri.parse(quanInfoUrl),
+        headers: const {
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0',
+        },
+      ).timeout(const Duration(seconds: 10));
 
       debugPrint('[QUAN_SERVICE] <- HTTP Status: ${response.statusCode}');
 
@@ -51,6 +56,12 @@ class QuanService {
         // Cache lại để dùng khi offline
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString(keyCachedJson, jsonEncode(decoded));
+
+        final locationCount = (decoded['locations'] as List?)?.length ?? 0;
+        final memberCount = (decoded['members'] as List?)?.length ?? 0;
+        debugPrint(
+            '[QUAN_SERVICE] Đã tải quan_info.json thành công: $locationCount locations, $memberCount members');
+
         return decoded;
       } else {
         debugPrint('[QUAN_SERVICE] Lỗi tải quan_info: HTTP ${response.statusCode}');

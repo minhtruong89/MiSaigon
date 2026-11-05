@@ -6,10 +6,11 @@ NT73DT	73 Đặng Tất, Nha Trang	https://dtri2206.github.io/freemeals-website/
 NT52HTT	52 Hai Tháng Tư, Nha Trang	https://dtri2206.github.io/freemeals-website/?location=NT52HTT	htt
 GL91DTH	91 Đinh Tiên Hoàng, Gia Lai	https://dtri2206.github.io/freemeals-website/?location=GL91DTH	dth
 GL85PDG	85 Phan Đình Giót, Gia Lai	https://dtri2206.github.io/freemeals-website/?location=GL85PDG	pdg
-GL00NVX	Bờ kè Nguyễn Viết Xuân, Gia Lai	https://dtri2206.github.io/freemeals-website/?location=GL00NVX	nvx
+GL00NVX	104 Nguyễn Viết Xuân, Gia Lai	https://dtri2206.github.io/freemeals-website/?location=GL00NVX	nvx
 TVTNNC4	Tác viên Tuyền Nguyễn - NC4	https://dtri2206.github.io/freemeals-website/?location=TVTNNC4	tnnc4
 TVHDNT	Tác viên Hương Đặng - QYV Nha Trang	https://dtri2206.github.io/freemeals-website/?location=TVHDNT	hdnt
 TVBTNT	Tác viên Bảo Trâm - QYV Nha Trang	https://dtri2206.github.io/freemeals-website/?location=TVBTNT	btnt
 TVNHGL	Tác viên Ngọc Hân - Gia Lai	https://dtri2206.github.io/freemeals-website/?location=TVNHGL	nhgl
 TVMNGL	Tác viên Minh Ngọc - Gia Lai	https://dtri2206.github.io/freemeals-website/?location=TVMNGL	mngl
 SG324PTH	324 Phạm Thế Hiển, TPHCM	https://dtri2206.github.io/freemeals-website/?location=SG324PTH	pth
+DN149OID	149 Ông Ích Đường, Đà Nẵng	https://dtri2206.github.io/freemeals-website/?location=DN149OID	oid

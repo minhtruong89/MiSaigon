@@ -1,7 +1,7 @@
 {
   "app_config": {
     "config_version": "1.0.0",
-    "update_url": "http://data.soncamedia.com/firmware/smartbox/miTuThien/MiTuThien_1.0.0.2_newUI.apk",
+    "update_url": "http://data.soncamedia.com/firmware/smartbox/miTuThien/MiTuThien_1.0.0.apk",
     "bearer": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRxZ2pucWVxd3Npam5zcGhwenF0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODc5MjUzNTEsImV4cCI6MjEwMzUwMTM1MX0.eJpR_qUIGLfZHylI5yoIngAtUr0qYpKLpHH9oKPIhZ4"
   },
   "locations": [
@@ -37,7 +37,7 @@
     },
     {
       "ma_quan": "GL00NVX",
-      "ten_quan": "Bờ kè Nguyễn Viết Xuân, Gia Lai",
+      "ten_quan": "104 Nguyễn Viết Xuân, Gia Lai",
       "password": "nvx"
     },
     {
@@ -69,6 +69,11 @@
       "ma_quan": "SG324PTH",
       "ten_quan": "324 Phạm Thế Hiển, TPHCM",
       "password": "pth"
+    },
+    {
+      "ma_quan": "DN149OID",
+      "ten_quan": "149 Ông Ích Đường, Đà Nẵng",
+      "password": "oid"
     }
   ],
   "members": [
@@ -266,6 +271,1321 @@
       "ma_khach": "sg_0031",
       "ho_va_ten": "Từ Văn Cường",
       "ma_nfc": [ "60:FA:E3:CF"]
+    },
+    {
+      "ma_khach": "sg_0032",
+      "ho_va_ten": "Đào Minh Quân",
+      "ma_nfc": [ "60:49:DE:CF"]
+    },
+    {
+      "ma_khach": "sg_0033",
+      "ho_va_ten": "Hồng Văn Quý",
+      "ma_nfc": [ "50:CA:1A:D0"]
+    },
+    {
+      "ma_khach": "sg_0034",
+      "ho_va_ten": "Huỳnh Văn Nhiều",
+      "ma_nfc": [ "10:84:E1:CF"]
+    },
+    {
+      "ma_khach": "sg_0035",
+      "ho_va_ten": "Lê Cát Hải",
+      "ma_nfc": [ "40:F6:47:D0"]
+    },
+    {
+      "ma_khach": "sg_0036",
+      "ho_va_ten": "Lê Thị Hoa",
+      "ma_nfc": [ "20:FD:3C:D0"]
+    },
+    {
+      "ma_khach": "sg_0037",
+      "ho_va_ten": "Nguyễn Thị Kim Chi",
+      "ma_nfc": [ "D0:F8:44:D0"]
+    },
+    {
+      "ma_khach": "sg_0038",
+      "ho_va_ten": "Nguyễn Văn Bảy",
+      "ma_nfc": [ "B0:AE:0A:D0"]
+    },
+    {
+      "ma_khach": "sg_0039",
+      "ho_va_ten": "Phạm Văn Lèo",
+      "ma_nfc": [ "D0:B5:06:D0"]
+    },
+    {
+      "ma_khach": "sg_0040",
+      "ho_va_ten": "Phạm Văn Luyến",
+      "ma_nfc": [ "80:46:2E:D0"]
+    },
+    {
+      "ma_khach": "sg_0041",
+      "ho_va_ten": "Châu Văn Thông",
+      "ma_nfc": [ "60:00:44:D0"]
+    },
+    {
+      "ma_khach": "sg_0042",
+      "ho_va_ten": "Lê Thanh Bảo",
+      "ma_nfc": [ "50:4E:06:D0"]
+    },
+    {
+      "ma_khach": "sg_0043",
+      "ho_va_ten": "Nguyễn Mây",
+      "ma_nfc": [ "A0:AA:F3:CF"]
+    },
+    {
+      "ma_khach": "sg_0044",
+      "ho_va_ten": "Nguyễn Thị Trúc Ly",
+      "ma_nfc": [ "E0:EF:09:D0"]
+    },
+    {
+      "ma_khach": "sg_0045",
+      "ho_va_ten": "Nguyễn Ngọc Thảo",
+      "ma_nfc": [ "C0:F5:26:D0"]
+    },
+    {
+      "ma_khach": "sg_0046",
+      "ho_va_ten": "Nguyễn Thanh Thủy",
+      "ma_nfc": [ "A0:AF:42:D0"]
+    },
+    {
+      "ma_khach": "sg_0047",
+      "ho_va_ten": "Nguyễn Thanh Băng Nhi",
+      "ma_nfc": [ "20:D8:FD:CF"]
+    },
+    {
+      "ma_khach": "sg_0048",
+      "ho_va_ten": "Nguyễn Thị Phan Sanh",
+      "ma_nfc": [ "F0:C8:FF:CF"]
+    },
+    {
+      "ma_khach": "sg_0049",
+      "ho_va_ten": "Nguyễn Văn Cư",
+      "ma_nfc": [ "40:74:1E:D0"]
+    },
+    {
+      "ma_khach": "sg_0050",
+      "ho_va_ten": "Nguyễn Văn Tài",
+      "ma_nfc": [ "60:91:42:D0"]
+    },
+    {
+      "ma_khach": "sg_0051",
+      "ho_va_ten": "Dương Thanh Phú",
+      "ma_nfc": [ "D0:68:2E:D0"]
+    },
+    {
+      "ma_khach": "sg_0052",
+      "ho_va_ten": "Đỗ Quang Vinh",
+      "ma_nfc": [ "00:D5:EE:CF"]
+    },
+    {
+      "ma_khach": "sg_0053",
+      "ho_va_ten": "Nguyễn Thị Giàu",
+      "ma_nfc": [ "C0:E2:04:D0"]
+    },
+    {
+      "ma_khach": "sg_0054",
+      "ho_va_ten": "Nguyễn Thị Kim Bạch",
+      "ma_nfc": [ "90:62:37:D0"]
+    },
+    {
+      "ma_khach": "sg_0055",
+      "ho_va_ten": "Nguyễn Văn Thuận",
+      "ma_nfc": [ "00:9C:1E:D0"]
+    },
+    {
+      "ma_khach": "sg_0056",
+      "ho_va_ten": "Nguyễn Thị Rỡ",
+      "ma_nfc": [ "80:3C:0F:D0"]
+    },
+    {
+      "ma_khach": "sg_0057",
+      "ho_va_ten": "Phạm Thị Ngọc Hồng",
+      "ma_nfc": [ "90:27:19:D0"]
+    },
+    {
+      "ma_khach": "nt_022",
+      "ho_va_ten": "Đỗ Thị Nữ",
+      "ma_nfc": [ "50:EB:FE:CF"]
+    },
+    {
+      "ma_khach": "nt_023",
+      "ho_va_ten": "Cao Thị Nghiệp",
+      "ma_nfc": [ "C0:30:28:D0"]
+    },
+    {
+      "ma_khach": "nt_024",
+      "ho_va_ten": "Đặng Thị Nghi",
+      "ma_nfc": [ "E0:59:FD:CF"]
+    },
+    {
+      "ma_khach": "nt_028",
+      "ho_va_ten": "Đỗ Thị Thừa",
+      "ma_nfc": [ "D0:88:17:D0"]
+    },
+    {
+      "ma_khach": "nt_029",
+      "ho_va_ten": "Hồ Thị Năm",
+      "ma_nfc": [ "E0:CC:ED:CF"]
+    },
+    {
+      "ma_khach": "nt_030",
+      "ho_va_ten": "Huỳnh Thị Liên",
+      "ma_nfc": [ "50:EB:1D:D0"]
+    },
+    {
+      "ma_khach": "nt_032",
+      "ho_va_ten": "Lê Cao Hùng",
+      "ma_nfc": [ "20:E8:25:D0"]
+    },
+    {
+      "ma_khach": "nt_033",
+      "ho_va_ten": "Lê Hữu Phúc",
+      "ma_nfc": [ "30:8D:0E:D0"]
+    },
+    {
+      "ma_khach": "nt_034",
+      "ho_va_ten": "Lê Thị Hà",
+      "ma_nfc": [ "E0:EA:E2:CF"]
+    },
+    {
+      "ma_khach": "nt_035",
+      "ho_va_ten": "Lê Thị Kim Loan",
+      "ma_nfc": [ "80:A5:E7:CF"]
+    },
+    {
+      "ma_khach": "nt_036",
+      "ho_va_ten": "Lê Thị Trang",
+      "ma_nfc": [ "60:F1:7E:CB"]
+    },
+    {
+      "ma_khach": "nt_037",
+      "ho_va_ten": "Lê Thị Tuyết Vân",
+      "ma_nfc": [ "50:76:10:D0"]
+    },
+    {
+      "ma_khach": "nt_038",
+      "ho_va_ten": "Ma Thị Sâm",
+      "ma_nfc": [ "60:63:89:CB"]
+    },
+    {
+      "ma_khach": "nt_041",
+      "ho_va_ten": "Nguyễn Thị Hoa",
+      "ma_nfc": [ "80:C4:F6:CA"]
+    },
+    {
+      "ma_khach": "nt_042",
+      "ho_va_ten": "Nguyễn Thị Hường",
+      "ma_nfc": [ "40:E1:2E:D0"]
+    },
+    {
+      "ma_khach": "nt_043",
+      "ho_va_ten": "Nguyễn Thị Lệ",
+      "ma_nfc": [ "60:2B:DF:CF"]
+    },
+    {
+      "ma_khach": "nt_044",
+      "ho_va_ten": "Nguyễn Thị Mai",
+      "ma_nfc": [ "10:A0:E5:CF"]
+    },
+    {
+      "ma_khach": "nt_045",
+      "ho_va_ten": "Nguyễn Thị Mỹ Linh",
+      "ma_nfc": [ "B0:18:F1:CF"]
+    },
+    {
+      "ma_khach": "nt_046",
+      "ho_va_ten": "Nguyễn Thị Thơm",
+      "ma_nfc": [ "60:8A:34:D0"]
+    },
+    {
+      "ma_khach": "nt_047",
+      "ho_va_ten": "Nguyễn Văn Dũng",
+      "ma_nfc": [ "20:BE:E0:CF"]
+    },
+    {
+      "ma_khach": "nt_048",
+      "ho_va_ten": "Nguyễn Văn Hoà",
+      "ma_nfc": [ "70:33:EC:CF"]
+    },
+    {
+      "ma_khach": "nt_050",
+      "ho_va_ten": "Phan Thị Phượng",
+      "ma_nfc": [ "20:8E:02:D0"]
+    },
+    {
+      "ma_khach": "nt_051",
+      "ho_va_ten": "Phùng Thị Thu Sen",
+      "ma_nfc": [ "00:23:11:D0"]
+    },
+    {
+      "ma_khach": "nt_052",
+      "ho_va_ten": "Tô Thị Hương",
+      "ma_nfc": [ "E0:BB:DD:CF"]
+    },
+    {
+      "ma_khach": "nt_053",
+      "ho_va_ten": "Trần Thanh Dũng",
+      "ma_nfc": [ "D0:B7:03:D0"]
+    },
+    {
+      "ma_khach": "nt_054",
+      "ho_va_ten": "Trần Thị Kim Yến",
+      "ma_nfc": [ "30:71:1F:D0"]
+    },
+    {
+      "ma_khach": "nt_026",
+      "ho_va_ten": "Đoàn Thị Nghĩa",
+      "ma_nfc": [ "10:3C:24:D0"]
+    },
+    {
+      "ma_khach": "nt_055",
+      "ho_va_ten": "Trần Thị Sáu",
+      "ma_nfc": [ "A0:3E:FB:CF"]
+    },
+    {
+      "ma_khach": "nt_057",
+      "ho_va_ten": "Võ Thị Gái",
+      "ma_nfc": [ "D0:05:3A:D0"]
+    },
+    {
+      "ma_khach": "nt_025",
+      "ho_va_ten": "Đặng Văn Hải",
+      "ma_nfc": [ "B0:39:00:D0"]
+    },
+    {
+      "ma_khach": "nt_027",
+      "ho_va_ten": "Đỗ Thị Hoa Lan",
+      "ma_nfc": [ "00:9E:22:D0"]
+    },
+    {
+      "ma_khach": "nt_031",
+      "ho_va_ten": "Huỳnh Trốn",
+      "ma_nfc": [ "60:CE:E3:CF"]
+    },
+    {
+      "ma_khach": "nt_039",
+      "ho_va_ten": "Nguyễn Đình Minh",
+      "ma_nfc": [ "80:C1:E7:CA"]
+    },
+    {
+      "ma_khach": "nt_040",
+      "ho_va_ten": "Nguyễn Thị Chi",
+      "ma_nfc": [ "D0:87:E1:CF"]
+    },
+    {
+      "ma_khach": "nt_049",
+      "ho_va_ten": "Phạm Văn Vinh",
+      "ma_nfc": [ "80:69:08:D0"]
+    },
+    {
+      "ma_khach": "nt_005",
+      "ho_va_ten": "Nguyễn Văn Tài",
+      "ma_nfc": [ "00:65:07:CB"]
+    },
+    {
+      "ma_khach": "nt_006",
+      "ho_va_ten": "Trần Thị Cúc",
+      "ma_nfc": [ "E0:05:02:CB"]
+    },
+    {
+      "ma_khach": "nt_007",
+      "ho_va_ten": "Võ Ngọc Đức",
+      "ma_nfc": [ "C0:9E:42:D0"]
+    },
+    {
+      "ma_khach": "nt_008",
+      "ho_va_ten": "Lê Thị Bé",
+      "ma_nfc": [ "30:D0:04:D0"]
+    },
+    {
+      "ma_khach": "nt_009",
+      "ho_va_ten": "Đào Thị Duyên",
+      "ma_nfc": [ "80:2D:1A:D0"]
+    },
+    {
+      "ma_khach": "nt_010",
+      "ho_va_ten": "Trần Thị Ngọc Giàu",
+      "ma_nfc": [ "C0:D2:01:D0"]
+    },
+    {
+      "ma_khach": "nt_011",
+      "ho_va_ten": "Trần Gia Khánh",
+      "ma_nfc": [ "10:7E:E8:CF"]
+    },
+    {
+      "ma_khach": "nt_012",
+      "ho_va_ten": "Bùi Phương Anh",
+      "ma_nfc": [ "10:78:15:D0"]
+    },
+    {
+      "ma_khach": "nt_013",
+      "ho_va_ten": "Đặng Thị Hoàng Oanh",
+      "ma_nfc": [ "C0:6F:11:D0"]
+    },
+    {
+      "ma_khach": "nt_014",
+      "ho_va_ten": "Lê Thị Kim Hồng",
+      "ma_nfc": [ "20:BB:11:D0"]
+    },
+    {
+      "ma_khach": "nt_015",
+      "ho_va_ten": "Lê Thị Mỹ Dung",
+      "ma_nfc": [ "A0:64:28:D0"]
+    },
+    {
+      "ma_khach": "nt_016",
+      "ho_va_ten": "Lê Thị Nhật Linh",
+      "ma_nfc": [ "60:BD:12:D0"]
+    },
+    {
+      "ma_khach": "nt_017",
+      "ho_va_ten": "Lương Thị Hồng",
+      "ma_nfc": [ "70:82:00:D0"]
+    },
+    {
+      "ma_khach": "nt_018",
+      "ho_va_ten": "Trương Thị Én",
+      "ma_nfc": [ "E0:18:0D:D0"]
+    },
+    {
+      "ma_khach": "nt_019",
+      "ho_va_ten": "Lê Thị Kim Nga",
+      "ma_nfc": [ "90:10:0A:D0"]
+    },
+    {
+      "ma_khach": "nt_020",
+      "ho_va_ten": "Bùi Thị Đức",
+      "ma_nfc": [ "C0:10:01:D0"]
+    },
+    {
+      "ma_khach": "nt_021",
+      "ho_va_ten": "Cao Thị Khánh Phước",
+      "ma_nfc": [ "20:C0:00:CB"]
+    },
+    {
+      "ma_khach": "sg_0058",
+      "ho_va_ten": "Đồng Thị Sáng",
+      "ma_nfc": [ "00:6C:1C:CB"]
+    },
+    {
+      "ma_khach": "sg_0059",
+      "ho_va_ten": "Lê Thị Ngọc Dao",
+      "ma_nfc": [ "00:CB:D8:CA"]
+    },
+    {
+      "ma_khach": "sg_0060",
+      "ho_va_ten": "Phạm Thị Bích Hằng",
+      "ma_nfc": [ "D0:FD:E0:CA"]
+    },
+    {
+      "ma_khach": "sg_0061",
+      "ho_va_ten": "Trương Thị Thanh Xuân",
+      "ma_nfc": [ "10:3A:DE:CA"]
+    },
+    {
+      "ma_khach": "sg_0062",
+      "ho_va_ten": "Nguyễn Thông Thái",
+      "ma_nfc": [ "30:48:21:D0"]
+    },
+    {
+      "ma_khach": "sg_0063",
+      "ho_va_ten": "Võ Thị Tuyết",
+      "ma_nfc": [ "B0:EE:43:D0"]
+    },
+    {
+      "ma_khach": "gl_0006",
+      "ho_va_ten": "Đỗ Thị Như Mai",
+      "ma_nfc": [ "60:D6:FB:CF"]
+    },
+    {
+      "ma_khach": "gl_0007",
+      "ho_va_ten": "Chung Tự Phú",
+      "ma_nfc": [ "F0:EF:35:D0"]
+    },
+    {
+      "ma_khach": "gl_0008",
+      "ho_va_ten": "Hồ Thị Huê",
+      "ma_nfc": [ "40:8F:0E:D0"]
+    },
+    {
+      "ma_khach": "gl_0009",
+      "ho_va_ten": "Hồ Văn Thiện",
+      "ma_nfc": [ "B0:45:F8:CF"]
+    },
+    {
+      "ma_khach": "gl_0010",
+      "ho_va_ten": "Hồ Thị Lan",
+      "ma_nfc": [ "E0:F7:ED:CF"]
+    },
+    {
+      "ma_khach": "gl_0011",
+      "ho_va_ten": "Huỳnh Thị Thu Hương",
+      "ma_nfc": [ "90:07:0C:D0"]
+    },
+    {
+      "ma_khach": "gl_0012",
+      "ho_va_ten": "Lê Long",
+      "ma_nfc": [ "40:A4:EC:CF"]
+    },
+    {
+      "ma_khach": "gl_0013",
+      "ho_va_ten": "Lê Thị Bích Thuỷ",
+      "ma_nfc": [ "A0:BA:F1:CF"]
+    },
+    {
+      "ma_khach": "gl_0014",
+      "ho_va_ten": "Lê Thị Hồng",
+      "ma_nfc": [ "70:3A:00:D0"]
+    },
+    {
+      "ma_khach": "gl_0015",
+      "ho_va_ten": "Lê Thị Hồng Thuỷ",
+      "ma_nfc": [ "40:87:E9:CF"]
+    },
+    {
+      "ma_khach": "gl_0016",
+      "ho_va_ten": "Lê Văn Hùng",
+      "ma_nfc": [ "40:F4:07:D0"]
+    },
+    {
+      "ma_khach": "gl_0017",
+      "ho_va_ten": "Lê Thị Lỏi",
+      "ma_nfc": [ "80:7B:01:D0"]
+    },
+    {
+      "ma_khach": "gl_0018",
+      "ho_va_ten": "Nguyễn Văn Thanh",
+      "ma_nfc": [ "80:09:E0:CF"]
+    },
+    {
+      "ma_khach": "gl_0019",
+      "ho_va_ten": "Lê Văn Bình",
+      "ma_nfc": [ "A0:BC:09:D0"]
+    },
+    {
+      "ma_khach": "gl_0020",
+      "ho_va_ten": "Nguyễn Hoàng Nam",
+      "ma_nfc": [ "90:D5:19:D0"]
+    },
+    {
+      "ma_khach": "gl_0021",
+      "ho_va_ten": "Phạm Thị Kim Thanh",
+      "ma_nfc": [ "40:6B:EE:CF"]
+    },
+    {
+      "ma_khach": "gl_0022",
+      "ho_va_ten": "Nguyễn Năm",
+      "ma_nfc": [ "00:0D:11:D0"]
+    },
+    {
+      "ma_khach": "gl_0023",
+      "ho_va_ten": "Nguyễn Phương",
+      "ma_nfc": [ "40:6A:E4:CF"]
+    },
+    {
+      "ma_khach": "gl_0024",
+      "ho_va_ten": "Nguyễn Thị Bé",
+      "ma_nfc": [ "80:AB:18:D0"]
+    },
+    {
+      "ma_khach": "gl_0025",
+      "ho_va_ten": "Ngô Xuân Hải",
+      "ma_nfc": [ "A0:2A:1E:D0"]
+    },
+    {
+      "ma_khach": "gl_0026",
+      "ho_va_ten": "Nguyễn Thị Kim Oanh",
+      "ma_nfc": [ "C0:0F:ED:CF"]
+    },
+    {
+      "ma_khach": "gl_0027",
+      "ho_va_ten": "Nguyễn Thị Mỹ Dung",
+      "ma_nfc": [ "10:86:42:D0"]
+    },
+    {
+      "ma_khach": "gl_0028",
+      "ho_va_ten": "Nguyễn Minh Hiếu",
+      "ma_nfc": [ "50:85:FE:CF"]
+    },
+    {
+      "ma_khach": "gl_0029",
+      "ho_va_ten": "Nguyễn Thị Ngọc Tố",
+      "ma_nfc": [ "40:14:07:D0"]
+    },
+    {
+      "ma_khach": "gl_0030",
+      "ho_va_ten": "Nguyễn Xuân Giỏi",
+      "ma_nfc": [ "F0:CF:EA:CF"]
+    },
+    {
+      "ma_khach": "gl_0031",
+      "ho_va_ten": "Ôn Cỏn",
+      "ma_nfc": [ "60:97:5A:CB"]
+    },
+    {
+      "ma_khach": "gl_0032",
+      "ho_va_ten": "Phạm Thị Kim Oanh",
+      "ma_nfc": [ "E0:61:E7:CF"]
+    },
+    {
+      "ma_khach": "gl_0033",
+      "ho_va_ten": "Nguyễn Trường Tín",
+      "ma_nfc": [ "70:AE:7B:CB"]
+    },
+    {
+      "ma_khach": "gl_0034",
+      "ho_va_ten": "Phan Thị Kim Đính",
+      "ma_nfc": [ "A0:79:0B:CB"]
+    },
+    {
+      "ma_khach": "gl_0035",
+      "ho_va_ten": "Trần Quốc Thịnh",
+      "ma_nfc": [ "00:F0:0F:CB"]
+    },
+    {
+      "ma_khach": "gl_0036",
+      "ho_va_ten": "Đinh Thị Thu Hoà",
+      "ma_nfc": [ "40:E2:F7:CA"]
+    },
+    {
+      "ma_khach": "gl_0037",
+      "ho_va_ten": "Đinh Công Phương",
+      "ma_nfc": [ "20:43:47:D0"]
+    },
+    {
+      "ma_khach": "gl_0038",
+      "ho_va_ten": "Trần Thị Thái Thảo",
+      "ma_nfc": [ "C0:2A:F1:CF"]
+    },
+    {
+      "ma_khach": "gl_0039",
+      "ho_va_ten": "Trần Thị Thuý Phượng",
+      "ma_nfc": [ "90:35:47:D0"]
+    },
+    {
+      "ma_khach": "gl_0040",
+      "ho_va_ten": "Trần Thị Tín",
+      "ma_nfc": [ "A0:16:44:D0"]
+    },
+    {
+      "ma_khach": "gl_0041",
+      "ho_va_ten": "Trần Văn Sinh",
+      "ma_nfc": [ "90:66:3B:D0"]
+    },
+    {
+      "ma_khach": "gl_0042",
+      "ho_va_ten": "Trương Thị Bảy",
+      "ma_nfc": [ "00:50:13:D0"]
+    },
+    {
+      "ma_khach": "gl_0043",
+      "ho_va_ten": "Trương Thị Năm",
+      "ma_nfc": [ "80:6F:1D:D0"]
+    },
+    {
+      "ma_khach": "gl_0044",
+      "ho_va_ten": "Nguyễn Hữu Khang",
+      "ma_nfc": [ "A0:56:1C:D0"]
+    },
+    {
+      "ma_khach": "gl_0045",
+      "ho_va_ten": "Nguyễn Trương Yến Nhi",
+      "ma_nfc": [ "50:20:22:D0"]
+    },
+    {
+      "ma_khach": "gl_0046",
+      "ho_va_ten": "Văn Tình",
+      "ma_nfc": [ "80:B8:DF:CF"]
+    },
+    {
+      "ma_khach": "gl_0047",
+      "ho_va_ten": "Nguyễn Thị Ý Nguyệt",
+      "ma_nfc": [ "40:C5:1A:D0"]
+    },
+    {
+      "ma_khach": "gl_0048",
+      "ho_va_ten": "Đoàn Thu Ngân",
+      "ma_nfc": [ "F0:AA:FA:CF"]
+    },
+    {
+      "ma_khach": "gl_0049",
+      "ho_va_ten": "Võ Thị Xuân",
+      "ma_nfc": [ "F0:D4:EF:CF"]
+    },
+    {
+      "ma_khach": "gl_0050",
+      "ho_va_ten": "Võ Trần Thiên Phú",
+      "ma_nfc": [ "80:8A:21:D0"]
+    },
+    {
+      "ma_khach": "gl_0051",
+      "ho_va_ten": "Võ Như Ý",
+      "ma_nfc": [ "C0:19:1A:D0"]
+    },
+    {
+      "ma_khach": "gl_0052",
+      "ho_va_ten": "Hoàng Vĩnh Hòa",
+      "ma_nfc": [ "50:F9:DB:CA"]
+    },
+    {
+      "ma_khach": "gl_0053",
+      "ho_va_ten": "Hoàng Vĩnh Hưng",
+      "ma_nfc": [ "60:B4:FC:CA"]
+    },
+    {
+      "ma_khach": "gl_0054",
+      "ho_va_ten": "Võ Thị Linh",
+      "ma_nfc": [ "80:A2:22:D0"]
+    },
+    {
+      "ma_khach": "gl_0055",
+      "ho_va_ten": "Lê Thị Kim Mai",
+      "ma_nfc": [ "70:49:F5:CF"]
+    },
+    {
+      "ma_khach": "gl_0056",
+      "ho_va_ten": "Ngô Tấn Bình",
+      "ma_nfc": [ "40:F7:3F:D0"]
+    },
+    {
+      "ma_khach": "gl_0057",
+      "ho_va_ten": "Ngô Tấn Châu",
+      "ma_nfc": [ "40:E1:F7:CF"]
+    },
+    {
+      "ma_khach": "gl_0058",
+      "ho_va_ten": "Đinh Thị Phú",
+      "ma_nfc": [ "40:98:E7:CA"]
+    },
+    {
+      "ma_khach": "gl_0059",
+      "ho_va_ten": "Nguyễn Mạnh Kỳ",
+      "ma_nfc": [ "00:D4:EA:CF"]
+    },
+    {
+      "ma_khach": "gl_0060",
+      "ho_va_ten": "Nguyễn An Hy",
+      "ma_nfc": [ "70:54:28:D0"]
+    },
+    {
+      "ma_khach": "gl_0061",
+      "ho_va_ten": "Nguyễn Thị Chín",
+      "ma_nfc": [ "D0:45:F1:CF"]
+    },
+    {
+      "ma_khach": "gl_0062",
+      "ho_va_ten": "Nguyễn Thị Mỹ Yến",
+      "ma_nfc": [ "50:19:19:D0"]
+    },
+    {
+      "ma_khach": "gl_0063",
+      "ho_va_ten": "Nguyễn Hoàng Phương Trang",
+      "ma_nfc": [ "10:66:DF:CF"]
+    },
+    {
+      "ma_khach": "gl_0064",
+      "ho_va_ten": "Nguyễn Hoàng Phương",
+      "ma_nfc": [ "00:76:05:D0"]
+    },
+    {
+      "ma_khach": "gl_0065",
+      "ho_va_ten": "Nguyễn Thị Xinh",
+      "ma_nfc": [ "A0:96:1B:D0"]
+    },
+    {
+      "ma_khach": "SG0064",
+      "ho_va_ten": "Châu Hán Minh",
+      "ma_nfc": [ "70:1F:18:CB"]
+    },
+    {
+      "ma_khach": "SG0065",
+      "ho_va_ten": "Hứa Văn Tỷ",
+      "ma_nfc": [ "50:C3:1D:CB"]
+    },
+    {
+      "ma_khach": "SG0066",
+      "ho_va_ten": "Nguyễn Thị Phú",
+      "ma_nfc": [ "80:FA:05:CB"]
+    },
+    {
+      "ma_khach": "SG0067",
+      "ho_va_ten": "Nguyễn Thị Thanh Thủy",
+      "ma_nfc": [ "60:6F:E5:CA"]
+    },
+    {
+      "ma_khach": "SG0068",
+      "ho_va_ten": "Nguyễn Thị Thiên Ngân",
+      "ma_nfc": [ "40:A8:1D:CB"]
+    },
+    {
+      "ma_khach": "SG0069",
+      "ho_va_ten": "Nguyễn Thị Sách",
+      "ma_nfc": [ "F0:EC:FA:CA"]
+    },
+    {
+      "ma_khach": "SG0070",
+      "ho_va_ten": "Nguyễn Trần Thu Ngoan",
+      "ma_nfc": [ "30:6B:F9:CA"]
+    },
+    {
+      "ma_khach": "SG0071",
+      "ho_va_ten": "Nguyễn Trọng",
+      "ma_nfc": [ "80:05:DE:CA"]
+    },
+    {
+      "ma_khach": "SG0072",
+      "ho_va_ten": "Trần Thị Tuyết Nhung",
+      "ma_nfc": [ "20:30:3D:D0"]
+    },
+    {
+      "ma_khach": "SG0073",
+      "ho_va_ten": "Vương Văn Minh",
+      "ma_nfc": [ "70:42:3B:D0"]
+    },
+    {
+      "ma_khach": "GL0066",
+      "ho_va_ten": "Bùi Thị Mỹ Phương",
+      "ma_nfc": [ "80:E4:FB:CF"]
+    },
+    {
+      "ma_khach": "GL0067",
+      "ho_va_ten": "Lê Thị Ánh Hồng",
+      "ma_nfc": [ "50:FE:15:D0"]
+    },
+    {
+      "ma_khach": "GL0068",
+      "ho_va_ten": "Lê Thị Tám",
+      "ma_nfc": [ "60:85:1D:D0"]
+    },
+    {
+      "ma_khach": "GL0069",
+      "ho_va_ten": "Lê Thị Yến",
+      "ma_nfc": [ "B0:EE:FE:CF"]
+    },
+    {
+      "ma_khach": "GL0070",
+      "ho_va_ten": "Nay Lương",
+      "ma_nfc": [ "E0:F7:12:D0"]
+    },
+    {
+      "ma_khach": "GL0071",
+      "ho_va_ten": "Nguyễn Ngọc Minh",
+      "ma_nfc": [ "30:E3:1E:D0"]
+    },
+    {
+      "ma_khach": "GL0072",
+      "ho_va_ten": "Nguyễn Thị Cẩm",
+      "ma_nfc": [ "20:0D:18:D0"]
+    },
+    {
+      "ma_khach": "GL0073",
+      "ho_va_ten": "Nguyễn Thị Cẩm Nhung",
+      "ma_nfc": [ "30:D5:0B:D0"]
+    },
+    {
+      "ma_khach": "GL0074",
+      "ho_va_ten": "Nguyễn Thị Danh",
+      "ma_nfc": [ "D0:BF:1F:D0"]
+    },
+    {
+      "ma_khach": "GL0075",
+      "ho_va_ten": "Nguyễn Thị Dung",
+      "ma_nfc": [ "90:AF:00:D0"]
+    },
+    {
+      "ma_khach": "GL0076",
+      "ho_va_ten": "Nguyễn Thị Hà",
+      "ma_nfc": [ "60:C2:0F:D0"]
+    },
+    {
+      "ma_khach": "GL0077",
+      "ho_va_ten": "Nguyễn Thị Hồng Liên",
+      "ma_nfc": [ "70:7D:3E:D0"]
+    },
+    {
+      "ma_khach": "GL0078",
+      "ho_va_ten": "Nguyễn Thị Nhâm",
+      "ma_nfc": [ "C0:64:06:D0"]
+    },
+    {
+      "ma_khach": "GL0079",
+      "ho_va_ten": "Nguyễn Thị Phương",
+      "ma_nfc": [ "A0:2B:12:D0"]
+    },
+    {
+      "ma_khach": "GL0080",
+      "ho_va_ten": "Nguyễn Thị Tâm",
+      "ma_nfc": [ "20:D2:18:D0"]
+    },
+    {
+      "ma_khach": "GL0081",
+      "ho_va_ten": "Nguyễn Thị Thuỷ",
+      "ma_nfc": [ "B0:63:37:D0"]
+    },
+    {
+      "ma_khach": "GL0082",
+      "ho_va_ten": "Phạm Thị Năm",
+      "ma_nfc": [ "40:ED:04:D0"]
+    },
+    {
+      "ma_khach": "GL0083",
+      "ho_va_ten": "Phùng Thị Huệ",
+      "ma_nfc": [ "D0:ED:E9:CF"]
+    },
+    {
+      "ma_khach": "GL0084",
+      "ho_va_ten": "Trà Lan Anh",
+      "ma_nfc": [ "60:AE:3F:D0"]
+    },
+    {
+      "ma_khach": "GL0085",
+      "ho_va_ten": "Trần Thị Dư",
+      "ma_nfc": [ "40:58:1D:D0"]
+    },
+    {
+      "ma_khach": "GL0086",
+      "ho_va_ten": "Trần Thị Kim Loan",
+      "ma_nfc": [ "B0:9B:E1:CF"]
+    },
+    {
+      "ma_khach": "GL0087",
+      "ho_va_ten": "Trần Thị Ngọc Phúc",
+      "ma_nfc": [ "E0:C4:13:D0"]
+    },
+    {
+      "ma_khach": "GL0088",
+      "ho_va_ten": "Trà Thị Lan",
+      "ma_nfc": [ "90:4C:1A:D0"]
+    },
+    {
+      "ma_khach": "GL0089",
+      "ho_va_ten": "Trương Thị Ái",
+      "ma_nfc": [ "70:C1:EC:CF"]
+    },
+    {
+      "ma_khach": "GL0090",
+      "ho_va_ten": "Trương Thị Thanh Thuỷ",
+      "ma_nfc": [ "E0:9B:F8:CF"]
+    },
+    {
+      "ma_khach": "GL0091",
+      "ho_va_ten": "Võ Thị Phước",
+      "ma_nfc": [ "50:13:23:D0"]
+    },
+    {
+      "ma_khach": "SG0074",
+      "ho_va_ten": "Lê Thị Thơm",
+      "ma_nfc": [ "90:30:E5:CA"]
+    },
+    {
+      "ma_khach": "SG0075",
+      "ho_va_ten": "Lê Thị Tình",
+      "ma_nfc": [ "50:D4:E7:CA"]
+    },
+    {
+      "ma_khach": "SG0076",
+      "ho_va_ten": "Nguyễn Ngọc Trâm",
+      "ma_nfc": [ "A0:01:1B:CB"]
+    },
+    {
+      "ma_khach": "SG0077",
+      "ho_va_ten": "Nguyễn Sơn",
+      "ma_nfc": [ "D0:6F:2C:D0"]
+    },
+    {
+      "ma_khach": "SG0078",
+      "ho_va_ten": "Tăng Anh Tuấn",
+      "ma_nfc": [ "C0:8C:FF:CA"]
+    },
+    {
+      "ma_khach": "SG0079",
+      "ho_va_ten": "Trần Thị Thu Vân",
+      "ma_nfc": [ "A0:A1:FF:CA"]
+    },
+    {
+      "ma_khach": "SG0080",
+      "ho_va_ten": "Trịnh Thị Hoàng",
+      "ma_nfc": [ "C0:0B:16:D0"]
+    },
+    {
+      "ma_khach": "SG0081",
+      "ho_va_ten": "Nguyễn Thị Tâm",
+      "ma_nfc": [ "20:32:05:D0"]
+    },
+    {
+      "ma_khach": "SG0082",
+      "ho_va_ten": "Nguyễn Thị Hồng",
+      "ma_nfc": [ "D0:BA:03:D0"]
+    },
+    {
+      "ma_khach": "SG0083",
+      "ho_va_ten": "Trương Anh Dũng",
+      "ma_nfc": [ "20:52:25:D0"]
+    },
+    {
+      "ma_khach": "SG0084",
+      "ho_va_ten": "Lê Thị Thu Hồng",
+      "ma_nfc": [ "A0:2E:07:CB"]
+    },
+    {
+      "ma_khach": "SG0085",
+      "ho_va_ten": "Giang Thị Nguyệt",
+      "ma_nfc": [ "70:98:E1:CF"]
+    },
+    {
+      "ma_khach": "SG0086",
+      "ho_va_ten": "Đỗ Thị Thanh Xuân",
+      "ma_nfc": [ "80:A1:2C:D0"]
+    },
+    {
+      "ma_khach": "SG0087",
+      "ho_va_ten": "Đỗ Hồng Hà",
+      "ma_nfc": [ "B0:19:16:D0"]
+    },
+    {
+      "ma_khach": "SG0088",
+      "ho_va_ten": "Trịnh Thị Yến",
+      "ma_nfc": [ "80:CF:FE:CF"]
+    },
+    {
+      "ma_khach": "SG0089",
+      "ho_va_ten": "Nguyễn Thanh Phương",
+      "ma_nfc": [ "D0:E2:0A:D0"]
+    },
+    {
+      "ma_khach": "SG0090",
+      "ho_va_ten": "Nguyễn Thị Cân",
+      "ma_nfc": [ "30:3E:18:D0"]
+    },
+    {
+      "ma_khach": "GL0092",
+      "ho_va_ten": "Nguyễn Thị Thanh Thuỷ",
+      "ma_nfc": [ "B0:F7:23:D0"]
+    },
+    {
+      "ma_khach": "GL0093",
+      "ho_va_ten": "Lê Viết Bảo Ân",
+      "ma_nfc": [ "B0:C9:43:D0"]
+    },
+    {
+      "ma_khach": "GL0094",
+      "ho_va_ten": "Đỗ Văn Trí",
+      "ma_nfc": [ "20:2E:DA:CA"]
+    },
+    {
+      "ma_khach": "GL0095",
+      "ho_va_ten": "Đỗ Thị Thương",
+      "ma_nfc": [ "A0:30:FB:CA"]
+    },
+    {
+      "ma_khach": "NT0022",
+      "ho_va_ten": "Ngô Thị Tuý",
+      "ma_nfc": [ "00:20:26:D0"]
+    },
+    {
+      "ma_khach": "NT0023",
+      "ho_va_ten": "Lương Thị Kim Hồng",
+      "ma_nfc": [ "A0:ED:F7:CF"]
+    },
+    {
+      "ma_khach": "SG0091",
+      "ho_va_ten": "Trần Thị Nũi",
+      "ma_nfc": [ "C0:35:EB:CF"]
+    },
+    {
+      "ma_khach": "SG0092",
+      "ho_va_ten": "Phạm Thị Lan",
+      "ma_nfc": [ "D0:8A:35:D0"]
+    },
+    {
+      "ma_khach": "SG0093",
+      "ho_va_ten": "Nguyễn Văn Nghiệp",
+      "ma_nfc": [ "60:C4:1E:D0"]
+    },
+    {
+      "ma_khach": "SG0094",
+      "ho_va_ten": "Nguyễn Tuấn Minh",
+      "ma_nfc": [ "40:B0:E7:CF"]
+    },
+    {
+      "ma_khach": "SG0095",
+      "ho_va_ten": "Nguyễn Thị Tuyêt Mai",
+      "ma_nfc": [ "F0:8C:28:D0"]
+    },
+    {
+      "ma_khach": "SG0096",
+      "ho_va_ten": "Huỳnh Thị Mỹ Hạnh",
+      "ma_nfc": [ "10:BB:11:D0"]
+    },
+    {
+      "ma_khach": "SG0097",
+      "ho_va_ten": "Bùi Chí Thành",
+      "ma_nfc": [ "90:17:07:D0"]
+    },
+    {
+      "ma_khach": "SG0098",
+      "ho_va_ten": "Trần Thị Lệ",
+      "ma_nfc": [ "E0:CC:0D:D0"]
+    },
+    {
+      "ma_khach": "SG0099",
+      "ho_va_ten": "Võ Trí",
+      "ma_nfc": [ "90:F4:FF:CF"]
+    },
+    {
+      "ma_khach": "SG0100",
+      "ho_va_ten": "Nguyễn Thị Kim Oanh",
+      "ma_nfc": [ "70:90:3E:D0"]
+    },
+    {
+      "ma_khach": "SG0101",
+      "ho_va_ten": "Nguyễn Văn Thái",
+      "ma_nfc": [ "C0:43:3D:D0"]
+    },
+    {
+      "ma_khach": "SG0102",
+      "ho_va_ten": "Trần Thị Thu",
+      "ma_nfc": [ "E0:80:FD:CF"]
+    },
+    {
+      "ma_khach": "SG0103",
+      "ho_va_ten": "Trần Văn Hai",
+      "ma_nfc": [ "90:8B:29:D0"]
+    },
+    {
+      "ma_khach": "SG0104",
+      "ho_va_ten": "Nguyễn Thị Thu Hồng",
+      "ma_nfc": [ "A0:F2:05:D0"]
+    },
+    {
+      "ma_khach": "GL0096",
+      "ho_va_ten": "Đinh Thị Thu Đông",
+      "ma_nfc": [ "70:98:F8:CF"]
+    },
+    {
+      "ma_khach": "GL0097",
+      "ho_va_ten": "Lê Thị Hạnh",
+      "ma_nfc": [ "70:77:F9:CA"]
+    },
+    {
+      "ma_khach": "GL0098",
+      "ho_va_ten": "Lê Thị Thu",
+      "ma_nfc": [ "60:41:FF:CA"]
+    },
+    {
+      "ma_khach": "GL0099",
+      "ho_va_ten": "Lê Thị Yến",
+      "ma_nfc": [ "A0:D8:24:D0"]
+    },
+    {
+      "ma_khach": "GL0100",
+      "ho_va_ten": "Nguyễn Thị Ái",
+      "ma_nfc": [ "B0:53:26:D0"]
+    },
+    {
+      "ma_khach": "GL0101",
+      "ho_va_ten": "Nguyễn Thị Súng",
+      "ma_nfc": [ "70:96:0C:D0"]
+    },
+    {
+      "ma_khach": "GL0102",
+      "ho_va_ten": "Phạm Thị Mai",
+      "ma_nfc": [ "D0:E8:DD:CA"]
+    },
+    {
+      "ma_khach": "GL0103",
+      "ho_va_ten": "Vũ Thị Hồng",
+      "ma_nfc": [ "50:D9:02:D0"]
+    },
+    {
+      "ma_khach": "GL0104",
+      "ho_va_ten": "Đinh Vũ Tiến Long",
+      "ma_nfc": [ "80:12:0D:D0"]
+    },
+    {
+      "ma_khach": "GL0105",
+      "ho_va_ten": "Đinh Vũ Tiến Đạt",
+      "ma_nfc": [ "00:39:E7:CF"]
+    },
+    {
+      "ma_khach": "GL0106",
+      "ho_va_ten": "Trương Thị Lan",
+      "ma_nfc": [ "F0:E0:1D:CB"]
+    },
+    {
+      "ma_khach": "GL0107",
+      "ho_va_ten": "Phạm Lệ Nguyên",
+      "ma_nfc": [ "A0:90:0E:D0"]
+    },
+    {
+      "ma_khach": "GL0108",
+      "ho_va_ten": "Nguyễn Thị Lan",
+      "ma_nfc": [ "30:6D:2B:D0"]
+    },
+    {
+      "ma_khach": "GL0109",
+      "ho_va_ten": "Nguyễn Thị Kim Liên",
+      "ma_nfc": [ "40:4D:F1:CF"]
+    },
+    {
+      "ma_khach": "GL0110",
+      "ho_va_ten": "Ngọc Hiền",
+      "ma_nfc": [ "40:54:09:D0"]
+    },
+    {
+      "ma_khach": "GL0111",
+      "ho_va_ten": "Năn Xe",
+      "ma_nfc": [ "70:25:E7:CF"]
+    },
+    {
+      "ma_khach": "GL0112",
+      "ho_va_ten": "Nguyễn Thị Lương",
+      "ma_nfc": [ "40:59:00:D0"]
+    },
+    {
+      "ma_khach": "GL0113",
+      "ho_va_ten": "Trần Quốc Tuấn",
+      "ma_nfc": [ "D0:C7:16:D0"]
+    },
+    {
+      "ma_khach": "GL0114",
+      "ho_va_ten": "Lê Thị Ngân",
+      "ma_nfc": [ "50:00:F9:CF"]
+    },
+    {
+      "ma_khach": "GL0115",
+      "ho_va_ten": "Lê Thị Kim Thơ",
+      "ma_nfc": [ "20:C4:FA:CF"]
+    },
+    {
+      "ma_khach": "GL0116",
+      "ho_va_ten": "Phạm Thị Túc",
+      "ma_nfc": [ "D0:1B:22:D0"]
+    },
+    {
+      "ma_khach": "NT0024",
+      "ho_va_ten": "Hà Xuân Trường",
+      "ma_nfc": [ "B0:33:26:D0"]
+    },
+    {
+      "ma_khach": "SG0105",
+      "ho_va_ten": "Bùi Thị Ngọc Như",
+      "ma_nfc": [ "C0:C0:1A:CB"]
+    },
+    {
+      "ma_khach": "SG0106",
+      "ho_va_ten": "Huỳnh Kim Liên",
+      "ma_nfc": [ "B0:17:DE:CA"]
+    },
+    {
+      "ma_khach": "SG0107",
+      "ho_va_ten": "La Thu Nguyệt",
+      "ma_nfc": [ "80:50:EE:CF"]
+    },
+    {
+      "ma_khach": "SG0108",
+      "ho_va_ten": "Nguyễn Quang Hiếu",
+      "ma_nfc": [ "00:A5:0E:D0"]
+    },
+    {
+      "ma_khach": "SG0109",
+      "ho_va_ten": "Nguyễn Thị Hà",
+      "ma_nfc": [ "C0:11:1B:D0"]
+    },
+    {
+      "ma_khach": "SG0110",
+      "ho_va_ten": "Nguyễn Thị Hương",
+      "ma_nfc": [ "E0:03:1B:D0"]
+    },
+    {
+      "ma_khach": "SG0112",
+      "ho_va_ten": "Nguyễn Thị Thọ",
+      "ma_nfc": [ "50:D0:20:D0"]
+    },
+    {
+      "ma_khach": "SG0113",
+      "ho_va_ten": "Phạm Thạch",
+      "ma_nfc": [ "C0:E0:14:CB"]
+    },
+    {
+      "ma_khach": "SG0114",
+      "ho_va_ten": "PhanThị Nở",
+      "ma_nfc": [ "60:AD:D5:CA"]
+    },
+    {
+      "ma_khach": "SG0115",
+      "ho_va_ten": "Trần Thị Hương",
+      "ma_nfc": [ "C0:9B:0F:CB"]
+    },
+    {
+      "ma_khach": "SG0116",
+      "ho_va_ten": "Trần Thị Năm",
+      "ma_nfc": [ "50:2C:10:D0"]
+    },
+    {
+      "ma_khach": "SG0117",
+      "ho_va_ten": "Võ Thị Thạnh",
+      "ma_nfc": [ "80:A1:12:D0"]
+    },
+    {
+      "ma_khach": "SG0118",
+      "ho_va_ten": "Võ Thị Thu Trang",
+      "ma_nfc": [ "60:75:DC:CA"]
+    },
+    {
+      "ma_khach": "SG0119",
+      "ho_va_ten": "Nguyễn Thị Xuyến",
+      "ma_nfc": [ "90:44:15:CB"]
+    },
+    {
+      "ma_khach": "SG0120",
+      "ho_va_ten": "Võ Tân",
+      "ma_nfc": [ "E0:A4:20:D0"]
+    },
+    {
+      "ma_khach": "GL0117",
+      "ho_va_ten": "Đặng Bảo Anh",
+      "ma_nfc": [ "50:5A:E2:CA"]
+    },
+    {
+      "ma_khach": "GL0118",
+      "ho_va_ten": "Đặng Ngọc Minh Châu",
+      "ma_nfc": [ "50:42:DC:CA"]
+    },
+    {
+      "ma_khach": "GL0119",
+      "ho_va_ten": "Đặng Xuân Bảo An",
+      "ma_nfc": [ "F0:E1:28:D0"]
+    },
+    {
+      "ma_khach": "GL0120",
+      "ho_va_ten": "Nguyễn Bảo Thiên",
+      "ma_nfc": [ "A0:2F:2C:D0"]
+    },
+    {
+      "ma_khach": "GL0121",
+      "ho_va_ten": "Phan Thị Ngọc Thạch",
+      "ma_nfc": [ "20:AE:20:D0"]
+    },
+    {
+      "ma_khach": "GL0122",
+      "ho_va_ten": "Nguyễn Nhẫn",
+      "ma_nfc": [ "60:B6:EE:CA"]
+    },
+    {
+      "ma_khach": "GL0123",
+      "ho_va_ten": "Lê Thị Nhỏ",
+      "ma_nfc": [ "E0:BE:04:D0"]
+    },
+    {
+      "ma_khach": "GL0124",
+      "ho_va_ten": "Nguyễn Anh Linh",
+      "ma_nfc": [ "A0:89:E5:CA"]
+    },
+    {
+      "ma_khach": "GL0125",
+      "ho_va_ten": "Nguyễn Văn Bình",
+      "ma_nfc": [ "40:24:21:D0"]
     }
   ]
 }
